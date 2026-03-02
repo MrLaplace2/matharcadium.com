@@ -1,0 +1,1163 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Double-Path Robots</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg1: #071026;
+  --bg2: #140a3a;
+  --panel: rgba(15,23,42,0.72);
+  --line: rgba(255,255,255,0.14);
+  --text: #e5e7eb;
+  --muted: #a7b0c2;
+  --good: #22c55e;
+  --warn: #f59e0b;
+  --bad: #ef4444;
+  --accent: #60a5fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  color: var(--text);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: radial-gradient(1200px 700px at 15% 20%, #1b2a6a 0%, var(--bg2) 45%, var(--bg1) 100%);
+}
+
+.wrap { width: min(960px, 98vw); }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  box-shadow: 0 18px 40px rgba(0,0,0,0.4);
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.canvasCard {
+  position: relative;
+  padding: 10px;
+}
+
+canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+  border-radius: 16px;
+  border: 1px solid var(--line);
+  background: rgba(0,0,0,0.15);
+}
+
+/* === Title Overlay === */
+.titleOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  background: rgba(0,0,0,0.97);
+  z-index: 20;
+  border-radius: 16px;
+}
+
+.titleMain {
+  font-family: Orbitron, system-ui;
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  background: linear-gradient(90deg, #60a5fa, #22ee5f);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  margin: 0;
+}
+
+.titleCard {
+  width: min(520px, 92vw);
+  border-radius: 22px;
+  padding: 28px 24px 24px;
+  background: linear-gradient(145deg, #c87f31 0%, #675c95 55%, #2f4374 100%);
+  border: 1px solid rgba(96,165,250,0.45);
+  box-shadow:
+    0 0 30px rgba(96,165,250,0.25),
+    0 0 80px rgba(34,211,238,0.15),
+    0 30px 80px rgba(0,0,0,0.85);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+}
+
+.titleSub {
+  margin: 0;
+  font-size: 15px;
+  color: rgba(255,255,255,0.88);
+  line-height: 1.55;
+  max-width: 44ch;
+}
+
+.titleBtns {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.titleBtns button {
+  padding: 11px 22px;
+  font-size: 15px;
+  font-weight: 900;
+  border-radius: 14px;
+  border: 1px solid rgba(96,165,250,0.5);
+  background: linear-gradient(180deg, rgba(242,69,6,0.78), rgba(96,165,250,0.15));
+  color: rgb(126,246,242);
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(10,26,45,0.4);
+  transition: box-shadow 0.15s, transform 0.1s;
+}
+
+.titleBtns button:hover {
+  box-shadow: 0 0 18px rgba(120,9,92,0.8);
+  transform: translateY(-1px);
+}
+
+/* === HUD pills (during play) === */
+.hudPills {
+  display: none;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  right: 20px;
+  z-index: 5;
+  pointer-events: auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.canvasCard.playing .hudPills     { display: flex; }
+.canvasCard.playing .titleOverlay { display: none; }
+
+.pill {
+  padding: 7px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(0,0,0,0.25);
+  display: flex;
+  gap: 7px;
+  align-items: baseline;
+  backdrop-filter: blur(3px);
+}
+
+.pill .k { color: rgba(255,255,255,0.65); font-size: 12px; }
+.pill .v { font-weight: 800; font-size: 14px; color: white; }
+
+#roundPill { margin: 0 auto; }
+
+#backBtn {
+  appearance: none;
+  border: 1px solid rgba(96,165,250,0.35);
+  padding: 7px 14px;
+  border-radius: 14px;
+  font-weight: 900;
+  cursor: pointer;
+  color: var(--text);
+  background: rgba(96,165,250,0.18);
+  font-size: 13px;
+  transition: filter 0.1s;
+}
+#backBtn:hover { filter: brightness(1.1); }
+
+/* === Billboard HTML inputs (overlay on canvas, positioned by JS) === */
+.billboardUI {
+  position: absolute;
+  z-index: 6;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  pointer-events: auto;
+}
+
+.canvasCard.playing .billboardUI { display: flex; }
+
+.bbInput {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid rgba(96,165,250,0.40);
+  background: rgba(7,16,38,0.55);
+  color: #fff;
+  font-weight: 700;
+  font-size: 9px;
+  outline: none;
+  text-align: center;
+  backdrop-filter: blur(4px);
+}
+
+.bbInput:focus {
+  border-color: rgba(96,165,250,0.85);
+  box-shadow: 0 0 8px rgba(96,165,250,0.35);
+}
+
+.bbInput::placeholder { color: rgba(255,255,255,0.40); }
+
+.bbFracLine {
+  width: 80px;
+  height: 2px;
+  background: rgba(96,165,250,0.70);
+  border-radius: 2px;
+}
+
+.bbBtn {
+  appearance: none;
+  border: 1px solid rgba(96,165,250,0.40);
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-weight: 700;
+  font-size: 9px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.40);
+  background: rgba(7,16,38,0.55);
+  backdrop-filter: blur(4px);
+  transition: filter 0.1s, transform 0.08s;
+  white-space: nowrap;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+}
+
+.bbBtn:hover  {
+  filter: brightness(1.15);
+  box-shadow: 0 0 10px rgba(96,165,250,0.45);
+}
+.bbBtn:active { transform: translateY(1px); }
+.bbBtn:disabled { opacity: 0.40; cursor: not-allowed; }
+
+/* === Message bar === */
+.msgBar {
+  padding: 10px 16px;
+  border-top: 1px solid var(--line);
+  font-size: 13px;
+  line-height: 1.45;
+  min-height: 42px;
+  display: none;
+}
+
+.canvasCard.playing .msgBar { display: block; }
+.msgBar.good { color: var(--good); }
+.msgBar.warn { color: var(--warn); }
+.msgBar.bad  { color: var(--bad);  }
+
+@media (max-width: 600px) {
+  .titleMain { font-size: 24px; }
+  .titleCard { padding: 20px 16px; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card canvasCard" id="canvasCard">
+
+    <!-- HUD -->
+    <div class="hudPills">
+      <button id="backBtn">← Menu</button>
+      <div class="pill">
+        <span class="k">Hits</span>
+        <span class="v" id="hitsOut">0</span>
+      </div>
+      <div class="pill" id="roundPill">
+        <span class="k">Round</span>
+        <span class="v" id="roundOut">1 / 10</span>
+      </div>
+      <div class="pill">
+        <span class="k">Score</span>
+        <span class="v" id="scoreOut">0</span>
+      </div>
+    </div>
+
+    <!-- Title Screen -->
+    <div class="titleOverlay" id="titleOverlay">
+      <h1 class="titleMain">Double-Path: Robots</h1>
+      <div class="titleCard">
+        <p class="titleSub">
+          Fire a two-leg rocket at the enemy robot.<br>
+          Use <strong>Rise / Run</strong> slopes to aim each leg.<br><br>
+          <strong>Geometry Mode</strong> — rocket travels exactly rise/run grid units.<br>
+          <strong>Vector Mode</strong> — slope sets direction; speed scales with magnitude.
+        </p>
+        <div class="titleBtns">
+          <button id="geometryBtn">Geometry Mode</button>
+          <button id="vectorBtn">Vector Mode</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billboard UI: Building 1 = prompt label (no inputs needed, drawn on canvas) -->
+    <!-- Billboard UI: Building 2 = Rise/Run inputs -->
+    <div class="billboardUI" id="bbInputs">
+      <input class="bbInput" id="bbRise" inputmode="numeric" pattern="-?[0-9]*" placeholder="(Δy) Rise" autocomplete="off">
+      <div class="bbFracLine"></div>
+      <input class="bbInput" id="bbRun"  inputmode="numeric" pattern="-?[0-9]*" placeholder="(Δx) Run"  autocomplete="off">
+    </div>
+
+    <!-- Billboard UI: Building 3 = Lock button -->
+    <div class="billboardUI" id="bbLock">
+      <button class="bbBtn" id="bbLockBtn">LOCK ASCENT</button>
+    </div>
+
+    <canvas id="cv" width="920" height="540"></canvas>
+
+    <div class="msgBar warn" id="msgBar">Read the billboard — enter your slope and lock it!</div>
+  </div>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const TOTAL_ROUNDS  = 10;
+const GRID          = 30;
+const LEG_TIME      = 2.2;
+const MODE_GEOMETRY = "geometry";
+const MODE_VECTOR   = "vector";
+
+const PHASE_PREDICT_ASCENT  = 0;
+const PHASE_FIRE_ASCENT     = 1;
+const PHASE_PREDICT_DESCENT = 2;
+const PHASE_FIRE_DESCENT    = 3;
+
+// Billboard indices
+const BB_PROMPT = -1;  // lives on left robot platform (drawn separately)
+const BB_SLOPE  = 0;   // building 0 = rise/run inputs
+const BB_ACTION = 1;   // building 1 = lock/fire button
+
+// ─── Canvas ───────────────────────────────────────────────────────────────────
+const cv  = document.getElementById("cv");
+const ctx = cv.getContext("2d");
+const W = cv.width, H = cv.height;
+const groundY = H - 80;
+
+// ─── UI refs ──────────────────────────────────────────────────────────────────
+const canvasCard   = document.getElementById("canvasCard");
+const titleOverlay = document.getElementById("titleOverlay");
+const msgBar       = document.getElementById("msgBar");
+const roundOut     = document.getElementById("roundOut");
+const hitsOut      = document.getElementById("hitsOut");
+const scoreOut     = document.getElementById("scoreOut");
+const backBtn      = document.getElementById("backBtn");
+const geometryBtn  = document.getElementById("geometryBtn");
+const vectorBtn    = document.getElementById("vectorBtn");
+
+const bbInputsEl   = document.getElementById("bbInputs");
+const bbLockEl     = document.getElementById("bbLock");
+const bbRiseEl     = document.getElementById("bbRise");
+const bbRunEl      = document.getElementById("bbRun");
+const bbLockBtn    = document.getElementById("bbLockBtn");
+
+// ─── Game state ───────────────────────────────────────────────────────────────
+let gameMode = MODE_GEOMETRY;
+let round    = 1;
+let hits     = 0;
+let score    = 0;
+let phase    = PHASE_PREDICT_ASCENT;
+let flyingLeg       = 0;
+let pendingRoundEnd = null;
+
+// ─── World ────────────────────────────────────────────────────────────────────
+let leftRobot      = null;
+let rightRobot     = null;
+let buildings      = [];   // all 3 buildings; first 3 are fixed billboard buildings
+let rightRobotGone = false;
+let predTri1       = null;
+let predTri2       = null;
+
+// Neon flicker state
+let flickerT = 0;
+let flickerAlpha = 1.0;
+
+// Locked slope display (shown on building 1 billboard after lock)
+let lockedSlope = null;  // { rise, run } or null
+
+// ─── Rocket ───────────────────────────────────────────────────────────────────
+const rocket = { active:false, frozen:false, x:0, y:0, vx:0, vy:0, tLeft:0, r:6 };
+
+// ─── Explosion ────────────────────────────────────────────────────────────────
+const boom = { active:false, x:0, y:0, t:0, parts:[], hitRobot:false, flash:0 };
+
+// ─── Utilities ────────────────────────────────────────────────────────────────
+function rand(min, max) { return Math.random() * (max - min) + min; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function snapToGrid(v)  { return Math.round(v / GRID) * GRID; }
+function snapPt(x, y)   { return { x: snapToGrid(x), y: snapToGrid(y) }; }
+
+function gcd(a, b) {
+  a = Math.abs(a); b = Math.abs(b);
+  while (b) { const t = a % b; a = b; b = t; }
+  return a || 1;
+}
+
+function intVal(el) {
+  const v = parseInt(String(el.value).trim(), 10);
+  return Number.isFinite(v) ? v : NaN;
+}
+
+function setMessage(html, kind = "warn") {
+  msgBar.className = `msgBar ${kind}`;
+  msgBar.innerHTML = html;
+}
+
+function syncHUD() {
+  roundOut.textContent = gameMode === MODE_GEOMETRY ? "Sandbox" : `${round} / ${TOTAL_ROUNDS}`;
+  hitsOut.textContent  = String(hits);
+  scoreOut.textContent = String(score);
+}
+
+// ─── Velocity ─────────────────────────────────────────────────────────────────
+function velocityFromRiseRun(rise, run) {
+  if (gameMode === MODE_GEOMETRY)
+    return { vx: (run * GRID) / LEG_TIME, vy: (-rise * GRID) / LEG_TIME };
+  return { vx: run * GRID, vy: -rise * GRID };
+}
+
+// ─── Collision ────────────────────────────────────────────────────────────────
+function rectHitCircle(rx, ry, rw, rh, cx, cy, cr) {
+  const nx = clamp(cx, rx, rx + rw);
+  const ny = clamp(cy, ry, ry + rh);
+  const dx = cx - nx, dy = cy - ny;
+  return (dx * dx + dy * dy) <= cr * cr;
+}
+
+// ─── City generation ──────────────────────────────────────────────────────────
+const BB_H_MIN  = 140;   // minimum height for billboard buildings
+const BB_H_MAX  = 280;   // maximum height
+const BB_GAP    = 24;    // gap between middle buildings
+
+// Left robot platform — fixed width, holds billboard 0
+const LEFT_PAD  = 150;
+
+// Middle buildings — fixed widths to hold inputs and button
+const BB2_W     = 140;   // holds Rise/Run inputs
+const BB3_W     = 175;   // holds Lock/Fire button
+
+// Right robot platform — narrow so the target is hittable!
+const RIGHT_PAD = 60;
+
+function makeCity() {
+  buildings = [];
+
+  const extraPalette = [
+    "rgba(56,189,248,0.55)",
+    "rgba(168,85,247,0.50)",
+    "rgba(34,197,94,0.45)",
+    "rgba(244,114,182,0.45)",
+    "rgba(250,204,21,0.38)",
+    "rgba(251,146,60,0.50)"
+  ];
+
+  // ── Two middle billboard buildings ──
+  const midStart = LEFT_PAD + 40;
+  const midColors = [
+    "rgba(80,40,160,0.60)",
+    "rgba(40,120,180,0.60)"
+  ];
+  const midWidths = [BB2_W, BB3_W];
+
+  let bx = midStart;
+  for (let i = 0; i < 2; i++) {
+    const bh = Math.max(BB_H_MIN, rand(BB_H_MIN, BB_H_MAX));
+    buildings.push({ x: bx, w: midWidths[i], h: bh, c: midColors[i], isBillboard: true });
+    bx += midWidths[i] + BB_GAP;
+  }
+
+  // ── Two filler buildings in the gap ──
+  const gapStart  = bx + 10;
+  const gapEnd    = W - RIGHT_PAD - 20;
+  const gapSpan   = gapEnd - gapStart;
+  const fw1 = rand(50, 80), fw2 = rand(50, 80);
+  const fg  = Math.max(10, (gapSpan - fw1 - fw2) / 3);
+  let fx    = gapStart + fg;
+  [fw1, fw2].forEach(fw => {
+    buildings.push({
+      x: fx, w: fw,
+      h: rand(groundY * 0.20, groundY * 0.48),
+      c: extraPalette[Math.floor(rand(0, extraPalette.length))],
+      isBillboard: false
+    });
+    fx += fw + fg;
+  });
+
+  // ── Robots ──
+  leftRobot = {
+    roof: { x: 10, w: LEFT_PAD, h: rand(groundY*0.15, groundY*0.55) },
+    body: { w: 44, h: 52 },
+    color: roofPalette[Math.floor(rand(0, roofPalette.length))]
+  };
+  rightRobot = {
+    roof: { x: W - RIGHT_PAD - 10, w: RIGHT_PAD, h: rand(groundY*0.15, groundY*0.55) },
+    body: { w: 44, h: 52 },
+    color: roofPalette[Math.floor(rand(0, roofPalette.length))]
+  };
+}
+
+function robotRect(robot) {
+  const roofY = groundY - robot.roof.h;
+  const cx    = robot.roof.x + robot.roof.w / 2;
+  return { x: cx - robot.body.w/2, y: roofY - robot.body.h, w: robot.body.w, h: robot.body.h };
+}
+
+function robotHeadRect(robot) {
+  const r = robotRect(robot);
+  return { x: r.x + 6, y: r.y - 20, w: r.w - 12, h: 18 };
+}
+
+// ─── Billboard HTML overlay positioning ───────────────────────────────────────
+function positionBillboardUI() {
+  const rect    = cv.getBoundingClientRect();
+  const scaleX  = rect.width  / W;
+  const scaleY  = rect.height / H;
+  const cardRect = canvasCard.getBoundingClientRect();
+  const offX = rect.left - cardRect.left;
+  const offY = rect.top  - cardRect.top;
+
+  // Building 0 (BB_SLOPE) — Rise/Run inputs
+  const b1   = buildings[BB_SLOPE];
+  const b1cx = (b1.x + b1.w / 2) * scaleX + offX;
+  const b1py = offY + (groundY - b1.h + 58) * scaleY;
+  const inputW = Math.round((BB2_W - 20) * scaleX);
+
+  bbInputsEl.style.left  = `${b1cx - inputW / 2}px`;
+  bbInputsEl.style.top   = `${b1py}px`;
+  bbInputsEl.style.width = `${inputW}px`;
+
+  // Building 1 (BB_ACTION) — Lock/Fire button
+  const b2   = buildings[BB_ACTION];
+  const b2cx = (b2.x + b2.w / 2) * scaleX + offX;
+  const b2py = offY + (groundY - b2.h + 58) * scaleY;
+  const btnW = Math.round((BB3_W - 16) * scaleX);
+
+  bbLockEl.style.left  = `${b2cx - btnW / 2}px`;
+  bbLockEl.style.top   = `${b2py}px`;
+  bbLockEl.style.width = `${btnW}px`;
+}
+
+// ─── Rocket spawn ─────────────────────────────────────────────────────────────
+function spawnRocket() {
+  const lr  = robotRect(leftRobot);
+  rocket.x      = snapToGrid(lr.x + lr.w/2 + 18);
+  rocket.y      = snapToGrid(lr.y + 12);
+  rocket.vx     = 0; rocket.vy = 0;
+  rocket.tLeft  = 0;
+  rocket.active = false;
+  rocket.frozen = false;
+}
+
+// ─── Explosion ────────────────────────────────────────────────────────────────
+function explodeAt(x, y, hitRobot = false) {
+  boom.active   = true;
+  boom.x = x; boom.y = y;
+  boom.t        = 0;
+  boom.hitRobot = hitRobot;
+  boom.flash    = hitRobot ? 0.18 : 0.10;
+  boom.parts    = [];
+
+  const n = hitRobot ? 78 : 34;
+  for (let i = 0; i < n; i++) {
+    const a  = rand(0, Math.PI * 2);
+    const sp = hitRobot ? rand(90, 360) : rand(60, 240);
+    boom.parts.push({
+      x, y,
+      vx: Math.cos(a) * sp, vy: Math.sin(a) * sp,
+      r: hitRobot ? rand(2,7) : rand(2,5),
+      life: hitRobot ? rand(0.8,1.35) : rand(0.6,1.1)
+    });
+  }
+  if (hitRobot) rightRobotGone = true;
+}
+
+// ─── Round flow ───────────────────────────────────────────────────────────────
+function resetRound() {
+  rightRobotGone  = false;
+  boom.active     = false;
+  rocket.active   = false;
+  rocket.frozen   = false;
+  flyingLeg       = 0;
+  pendingRoundEnd = null;
+  predTri1        = null;
+  predTri2        = null;
+  lockedSlope     = null;
+
+  makeCity();
+  spawnRocket();
+  syncHUD();
+
+  // Reposition HTML overlays after city is rebuilt
+  requestAnimationFrame(() => positionBillboardUI());
+
+  setPhase(PHASE_PREDICT_ASCENT);
+}
+
+function endRound(reason) {
+  if (gameMode === MODE_GEOMETRY) {
+    // Sandbox — just reset the city, no rounds, no game over
+    resetRound();
+    if (reason) setMessage(reason, "warn");
+    return;
+  }
+  if (round >= TOTAL_ROUNDS) { gameOver(); return; }
+  round++;
+  resetRound();
+  if (reason) setMessage(reason, "warn");
+}
+
+function gameOver() {
+  rocket.active = false;
+  flyingLeg     = 0;
+  bbInputsEl.style.display = "none";
+  bbLockEl.style.display   = "none";
+  setMessage(`Game over! Final score: <b>${score}</b>  —  Hits: <b>${hits}</b>`, "good");
+}
+
+// ─── Phase / billboard UI ─────────────────────────────────────────────────────
+function setPhase(p) {
+  phase = p;
+  bbRiseEl.value = "";
+  bbRunEl.value  = "";
+  bbInputsEl.style.display = "flex";
+  bbLockEl.style.display   = "flex";
+  bbRiseEl.focus();
+
+  const configs = [
+    { btn: "LOCK ASCENT",  msg: "Building 1: what slope? Enter Rise &amp; Run, then lock it." },
+    { btn: "FIRE ↑",       msg: "Slope locked! Now confirm and fire the ascent." },
+    { btn: "LOCK DESCENT", msg: "Rocket paused! Predict your descent slope, then lock it." },
+    { btn: "FIRE ↓",       msg: "Slope locked! Fire the descent." },
+  ];
+
+  bbLockBtn.textContent = configs[p].btn;
+  setMessage(configs[p].msg, "warn");
+}
+
+function readSlope() {
+  const rise = intVal(bbRiseEl);
+  const run  = intVal(bbRunEl);
+  if (isNaN(rise) || isNaN(run) || run === 0) return null;
+  return { rise, run };
+}
+
+// ─── Lock/Fire button ─────────────────────────────────────────────────────────
+bbLockBtn.addEventListener("click", () => {
+  if (boom.active) return;
+
+  const p = readSlope();
+  if (!p) { setMessage("Enter whole numbers. Run cannot be 0.", "bad"); return; }
+
+  if (phase === PHASE_PREDICT_ASCENT) {
+    const lr  = robotRect(leftRobot);
+    const anc = snapPt(lr.x + lr.w/2 + 18, lr.y + 12);
+    predTri1  = { rise: p.rise, run: p.run, x0: anc.x, y0: anc.y };
+    lockedSlope = { rise: p.rise, run: p.run };
+    setPhase(PHASE_FIRE_ASCENT);
+    return;
+  }
+
+  if (phase === PHASE_FIRE_ASCENT) {
+    spawnRocket();
+    const v = velocityFromRiseRun(p.rise, p.run);
+    Object.assign(rocket, { vx: v.vx, vy: v.vy, tLeft: LEG_TIME, active: true, frozen: false });
+    flyingLeg = 1;
+    bbInputsEl.style.display = "none";
+    bbLockEl.style.display   = "none";
+    lockedSlope = null;
+    setMessage(`Ascent fired — slope ${p.rise} / ${p.run}`, "good");
+    return;
+  }
+
+  if (phase === PHASE_PREDICT_DESCENT) {
+    const anc = snapPt(rocket.x, rocket.y);
+    predTri2  = { rise: p.rise, run: p.run, x0: anc.x, y0: anc.y };
+    lockedSlope = { rise: p.rise, run: p.run };
+    setPhase(PHASE_FIRE_DESCENT);
+    return;
+  }
+
+  if (phase === PHASE_FIRE_DESCENT) {
+    const v = velocityFromRiseRun(p.rise, p.run);
+    Object.assign(rocket, { vx: v.vx, vy: v.vy, tLeft: LEG_TIME, active: true, frozen: false });
+    flyingLeg = 2;
+    bbInputsEl.style.display = "none";
+    bbLockEl.style.display   = "none";
+    lockedSlope = null;
+    setMessage(`Descent fired — slope ${p.rise} / ${p.run}`, "good");
+    return;
+  }
+});
+
+[bbRiseEl, bbRunEl].forEach(el =>
+  el.addEventListener("keydown", e => { if (e.key === "Enter") bbLockBtn.click(); })
+);
+
+// ─── Mode buttons ─────────────────────────────────────────────────────────────
+geometryBtn.addEventListener("click", () => startGame(MODE_GEOMETRY));
+vectorBtn.addEventListener("click",   () => startGame(MODE_VECTOR));
+
+backBtn.addEventListener("click", () => {
+  canvasCard.classList.remove("playing");
+  titleOverlay.style.display = "flex";
+  bbInputsEl.style.display   = "none";
+  bbLockEl.style.display     = "none";
+});
+
+function startGame(mode) {
+  gameMode = mode;
+  round = 1; hits = 0; score = 0;
+  canvasCard.classList.add("playing");
+  titleOverlay.style.display = "none";
+  resetRound();
+}
+
+window.addEventListener("resize", () => {
+  if (canvasCard.classList.contains("playing")) positionBillboardUI();
+});
+
+// ─── Update ───────────────────────────────────────────────────────────────────
+function update(dt) {
+  // Explosion
+  if (boom.active) {
+    boom.t    += dt;
+    boom.flash = Math.max(0, boom.flash - dt * 1.6);
+    for (const p of boom.parts) {
+      p.life -= dt; p.x += p.vx * dt; p.y += p.vy * dt;
+      p.vx *= Math.pow(0.12, dt); p.vy *= Math.pow(0.12, dt);
+      p.vy += 260 * dt;
+    }
+    boom.parts = boom.parts.filter(p => p.life > 0);
+    if (boom.t > 1.2 || boom.parts.length === 0) {
+      boom.active = false;
+      const msg = pendingRoundEnd;
+      pendingRoundEnd = null;
+      setTimeout(() => { if (msg !== null) endRound(msg); else resetRound(); }, 60);
+    }
+  }
+
+  if (!rocket.active) return;
+
+  rocket.tLeft -= dt;
+  rocket.x     += rocket.vx * dt;
+  rocket.y     += rocket.vy * dt;
+
+  if (rocket.tLeft <= 0) {
+    rocket.tLeft = 0; rocket.active = false; rocket.frozen = true;
+    rocket.x = snapToGrid(rocket.x); rocket.y = snapToGrid(rocket.y);
+
+    if (flyingLeg === 1) {
+      flyingLeg = 0;
+      lockedSlope = null;
+      // Reposition inputs over new midpoint location
+      requestAnimationFrame(() => positionBillboardUI());
+      setPhase(PHASE_PREDICT_DESCENT);
+    } else if (flyingLeg === 2) {
+      flyingLeg = 0;
+      pendingRoundEnd = "Descent completed — no hit.";
+      explodeAt(rocket.x, rocket.y, false);
+    }
+    return;
+  }
+
+  // Building collisions
+  for (const b of buildings) {
+    if (rectHitCircle(b.x, groundY - b.h, b.w, b.h, rocket.x, rocket.y, rocket.r)) {
+      rocket.active   = false;
+      pendingRoundEnd = flyingLeg === 1 ? "Ascent crashed into a building." : "Descent crashed into a building.";
+      explodeAt(rocket.x, rocket.y, false);
+      return;
+    }
+  }
+
+  // Roof collisions
+  for (const robot of [leftRobot, rightRobot]) {
+    const rf = robot.roof;
+    if (rectHitCircle(rf.x, groundY - rf.h, rf.w, rf.h, rocket.x, rocket.y, rocket.r)) {
+      rocket.active   = false;
+      pendingRoundEnd = "Clipped a rooftop — round over.";
+      explodeAt(rocket.x, rocket.y, false);
+      return;
+    }
+  }
+
+  // Right robot hit
+  if (!rightRobotGone) {
+    const head = robotHeadRect(rightRobot);
+    const body = robotRect(rightRobot);
+    const hitHead = rectHitCircle(head.x, head.y, head.w, head.h, rocket.x, rocket.y, rocket.r);
+    const hitBody = rectHitCircle(body.x, body.y, body.w, body.h, rocket.x, rocket.y, rocket.r);
+
+    if (hitHead || hitBody) {
+      rocket.active = false;
+      hits++;
+      const earned = hitHead ? 20 : 10;
+      score += earned;
+      syncHUD();
+      explodeAt(rocket.x, rocket.y, true);
+      setMessage(hitHead ? `HEADSHOT 💥 +${earned}` : `Body hit 💥 +${earned}`, "good");
+      pendingRoundEnd = "Direct hit!";
+      return;
+    }
+  }
+
+  // Out of bounds
+  if (rocket.x < -40 || rocket.x > W + 40 || rocket.y < -60 || rocket.y > H + 60) {
+    rocket.active   = false;
+    pendingRoundEnd = flyingLeg === 1 ? "Ascent flew off screen." : "Descent flew off screen.";
+    explodeAt(clamp(rocket.x, 0, W), clamp(rocket.y, 0, H), false);
+  }
+}
+
+// ─── Drawing ──────────────────────────────────────────────────────────────────
+function drawSky() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0.00, "#87CEFA");
+  g.addColorStop(0.35, "#FFD6A5");
+  g.addColorStop(0.62, "#FF8FAB");
+  g.addColorStop(0.82, "#FFB703");
+  g.addColorStop(1.00, "#F77F00");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  ctx.save(); ctx.globalAlpha = 0.35;
+  const sun = ctx.createRadialGradient(W*0.82, groundY-120, 10, W*0.82, groundY-120, 280);
+  sun.addColorStop(0.00, "rgba(255,255,255,0.95)");
+  sun.addColorStop(0.25, "rgba(255,240,180,0.55)");
+  sun.addColorStop(0.55, "rgba(255,170,120,0.22)");
+  sun.addColorStop(1.00, "rgba(255,170,120,0.00)");
+  ctx.fillStyle = sun; ctx.fillRect(0, 0, W, H);
+  ctx.restore();
+}
+
+function drawGround() {
+  ctx.fillStyle = "rgba(0,0,0,0.35)";
+  ctx.fillRect(0, groundY, W, H - groundY);
+}
+
+function drawGrid() {
+  ctx.save();
+  for (let x = 0; x <= W; x += GRID) {
+    const major = x % (GRID * 5) === 0;
+    ctx.strokeStyle = major ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.34)";
+    ctx.lineWidth   = major ? 1.3 : 1;
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, groundY); ctx.stroke();
+  }
+  for (let y = 0; y <= groundY; y += GRID) {
+    const major = y % (GRID * 5) === 0;
+    ctx.strokeStyle = major ? "rgba(255,255,255,0.40)" : "rgba(255,255,255,0.34)";
+    ctx.lineWidth   = major ? 1.3 : 1;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawBuilding(b) {
+  const x = b.x, y = groundY - b.h, w = b.w, h = b.h;
+  ctx.fillStyle = b.c; ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "rgba(0,0,0,0.40)"; ctx.lineWidth = 2; ctx.strokeRect(x, y, w, h);
+
+  // Windows
+  ctx.save(); ctx.globalAlpha = 0.30;
+  const cols = Math.max(2, Math.floor(w / 20));
+  const rows = Math.max(4, Math.floor(h / 24));
+  ctx.fillStyle = "rgba(250,204,21,0.85)";
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if ((r + c) % 4 === 0) continue;
+      ctx.fillRect(x + 7 + c*(w-14)/cols, y + 12 + r*(h-22)/rows, 6, 8);
+    }
+  }
+  ctx.restore();
+}
+
+// ─── Neon billboard drawing ───────────────────────────────────────────────────
+function drawBillboardFrame(b, offsetY = 14, frameH = 110) {
+  const bx = b.x, by = groundY - b.h;
+  const pad = 8;
+  const fw  = b.w - pad * 2;
+  const fh  = frameH;
+  const fx  = bx + pad;
+  const fy  = by + offsetY;
+  // No background drawn — text floats directly on the building
+  return { fx, fy, fw, fh };
+}
+
+function pillText(text, x, y, size = 12, color = "rgba(255,255,255,0.90)") {
+  ctx.save();
+  ctx.font         = `800 ${size}px system-ui, -apple-system, sans-serif`;
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle    = color;
+  ctx.fillText(text, x, y);
+  ctx.restore();
+}
+
+function drawBillboards() {
+  if (!buildings.length || !leftRobot) return;
+  const now = performance.now() / 1000;
+
+  const phaseLabels = ["PREDICT", "FIRE",     "PREDICT",  "FIRE"];
+  const subLabels   = ["ASCENT",  "ASCENT ↑", "DESCENT",  "DESCENT ↓"];
+
+  // ── Left robot platform: Instruction panel ──
+  const lr  = leftRobot.roof;
+  const lrb = { x: lr.x, w: lr.w, h: lr.h };
+  const { fx: f0x, fy: f0y, fw: f0w } = drawBillboardFrame(lrb);
+  const cx0 = f0x + f0w / 2;
+
+  pillText(phaseLabels[phase], cx0, f0y + 28, 16, "rgba(250,204,21,0.95)");
+  pillText(subLabels[phase],   cx0, f0y + 52, 16, "rgba(250,204,21,0.75)");
+
+  // ── Building 0: Slope input panel ──
+  const b1 = buildings[BB_SLOPE];
+  const { fx: f1x, fy: f1y, fw: f1w } = drawBillboardFrame(b1, 14, 160);
+  const cx1 = f1x + f1w / 2;
+
+  pillText("Slope", cx1, f1y + 20, 16, "rgba(250,204,21,0.95)");
+
+  if (lockedSlope) {
+    pillText(String(lockedSlope.rise), cx1, f1y + 50, 18, "rgba(250,204,21,0.95)");
+    // fraction bar
+    ctx.save();
+    ctx.strokeStyle = "rgba(250,204,21,0.60)";
+    ctx.lineWidth   = 1.5;
+    ctx.beginPath(); ctx.moveTo(cx1-18, f1y+64); ctx.lineTo(cx1+18, f1y+64); ctx.stroke();
+    ctx.restore();
+    pillText(String(lockedSlope.run), cx1, f1y + 80, 18, "rgba(250,204,21,0.95)");
+  } else {
+    pillText("—", cx1, f1y + 50, 18, "rgba(250,204,21,0.25)");
+    ctx.save();
+    ctx.strokeStyle = "rgba(250,204,21,0.20)";
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(cx1-18, f1y+64); ctx.lineTo(cx1+18, f1y+64); ctx.stroke();
+    ctx.restore();
+    pillText("—", cx1, f1y + 80, 18, "rgba(250,204,21,0.25)");
+  }
+
+  // ── Building 1: Action panel ──
+  const b2 = buildings[BB_ACTION];
+  const { fx: f2x, fy: f2y, fw: f2w } = drawBillboardFrame(b2);
+  const cx2 = f2x + f2w / 2;
+
+  const actionLabel = (phase === 1 || phase === 3) ? "FIRE!" : "LOCK IT!";
+  const actionColor = (phase === 1 || phase === 3)
+    ? "rgba(34,197,94,0.95)"
+    : "rgba(250,204,21,0.95)";
+
+  pillText(actionLabel, cx2, f2y + 30, 13, actionColor);
+
+  // Pulsing arrow pointing down toward the button
+  const pulse = 0.5 + 0.5 * Math.sin(now * 3.5);
+  ctx.save();
+  ctx.globalAlpha  = 0.45 + 0.45 * pulse;
+  ctx.font         = "16px system-ui";
+  ctx.textAlign    = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillStyle    = actionColor;
+  ctx.fillText("▼", cx2, f2y + 70);
+  ctx.restore();
+}
+
+const roofPalette = [
+  "rgba(56,189,248,0.55)",
+  "rgba(168,85,247,0.50)",
+  "rgba(34,197,94,0.45)",
+  "rgba(244,114,182,0.45)",
+  "rgba(250,204,21,0.38)",
+  "rgba(251,146,60,0.50)"
+];
+
+function drawRoof(rf, color) {
+  const x = rf.x, y = groundY - rf.h, w = rf.w, h = rf.h;
+
+  // Colorful building body
+  ctx.fillStyle = color;
+  ctx.fillRect(x, y, w, h);
+  ctx.strokeStyle = "rgba(0,0,0,0.40)";
+  ctx.lineWidth   = 2;
+  ctx.strokeRect(x, y, w, h);
+
+  // Windows — same as regular buildings
+  ctx.save();
+  ctx.globalAlpha = 0.30;
+  const cols = Math.max(2, Math.floor(w / 20));
+  const rows = Math.max(4, Math.floor(h / 24));
+  ctx.fillStyle = "rgba(250,204,21,0.85)";
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      if ((r + c) % 4 === 0) continue;
+      ctx.fillRect(x + 7 + c*(w-14)/cols, y + 12 + r*(h-22)/rows, 6, 8);
+    }
+  }
+  ctx.restore();
+}
+
+function drawRobot(robot, side) {
+  const r  = robotRect(robot);
+  const cx = r.x + r.w / 2;
+  ctx.save();
+
+  ctx.fillStyle = side === "L" ? "rgba(96,165,250,0.85)" : "rgba(34,197,94,0.78)";
+  ctx.fillRect(r.x, r.y, r.w, r.h);
+  ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 2;
+  ctx.strokeRect(r.x, r.y, r.w, r.h);
+
+  ctx.fillStyle = side === "L" ? "rgba(168,85,247,0.82)" : "rgba(244,114,182,0.72)";
+  ctx.fillRect(r.x+6, r.y-20, r.w-12, 18);
+  ctx.strokeRect(r.x+6, r.y-20, r.w-12, 18);
+
+  ctx.fillStyle = "rgba(250,204,21,0.9)";
+  ctx.fillRect(r.x+14, r.y-15, 7, 6);
+  ctx.fillRect(r.x+r.w-21, r.y-15, 7, 6);
+
+  ctx.beginPath(); ctx.moveTo(cx, r.y-20); ctx.lineTo(cx, r.y-34);
+  ctx.strokeStyle = "rgba(229,231,235,0.7)"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(cx, r.y-36, 4, 0, Math.PI*2);
+  ctx.fillStyle = "rgba(250,204,21,0.9)"; ctx.fill();
+
+  ctx.restore();
+}
+
+function drawSlopeTriangle(tri) {
+  if (!tri) return;
+  const x0 = tri.x0, y0 = tri.y0;
+  const bx = snapToGrid(x0 + tri.run  * GRID), by = y0;
+  const cx = bx, cy = snapToGrid(y0 - tri.rise * GRID);
+
+  ctx.save(); ctx.lineWidth = 3;
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(bx,by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(bx,by); ctx.lineTo(cx,cy); ctx.stroke();
+  ctx.strokeStyle = "rgba(96,165,250,0.95)"; ctx.lineWidth = 4;
+  ctx.beginPath(); ctx.moveTo(x0,y0); ctx.lineTo(cx,cy); ctx.stroke();
+
+  ctx.font = "13px system-ui"; ctx.fillStyle = "rgba(255,255,255,0.9)";
+  ctx.fillText(`Δx=${tri.run}`,  (x0+bx)/2-20, y0+20);
+  ctx.fillText(`Δy=${tri.rise}`, bx+8, (by+cy)/2);
+
+  const g = gcd(tri.rise, tri.run);
+  if (g > 1) {
+    const ur = tri.rise/g, uu = tri.run/g;
+    ctx.lineWidth = 2;
+    for (let i = 0; i < g; i++) {
+      const ax  = snapToGrid(x0 + uu*i*GRID), ay  = snapToGrid(y0 - ur*i*GRID);
+      const bbx = snapToGrid(ax + uu*GRID),   ccy = snapToGrid(ay - ur*GRID);
+      ctx.globalAlpha = 0.60;
+      ctx.strokeStyle = "rgba(255,255,255,0.65)";
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bbx,ay); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(bbx,ay); ctx.lineTo(bbx,ccy); ctx.stroke();
+      ctx.strokeStyle = "rgba(96,165,250,0.80)";
+      ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bbx,ccy); ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+
+function drawRocket() {
+  if (!rocket.active && !rocket.frozen) return;
+  ctx.save();
+  ctx.globalAlpha = 0.28;
+  ctx.beginPath(); ctx.arc(rocket.x, rocket.y, rocket.r*2.4, 0, Math.PI*2);
+  ctx.fillStyle = "rgba(255,255,255,0.6)"; ctx.fill();
+
+  ctx.globalAlpha = 1;
+  ctx.beginPath(); ctx.arc(rocket.x, rocket.y, rocket.r, 0, Math.PI*2);
+  ctx.fillStyle = "rgba(250,204,21,0.95)"; ctx.fill();
+  ctx.strokeStyle = "rgba(0,0,0,0.35)"; ctx.lineWidth = 2; ctx.stroke();
+
+  if (rocket.active) {
+    ctx.globalAlpha = 0.75;
+    ctx.beginPath();
+    ctx.moveTo(rocket.x, rocket.y);
+    ctx.lineTo(rocket.x - rocket.vx*0.07, rocket.y - rocket.vy*0.07);
+    ctx.strokeStyle = "rgba(244,114,182,0.9)"; ctx.lineWidth = 4; ctx.stroke();
+  } else {
+    ctx.globalAlpha = 0.85; ctx.font = "12px system-ui";
+    ctx.fillStyle = "rgba(229,231,235,0.9)"; ctx.fillText("⏸", rocket.x+9, rocket.y-7);
+  }
+  ctx.restore();
+}
+
+function drawExplosion() {
+  if (!boom.active) return;
+  ctx.save();
+  if (boom.flash > 0) {
+    ctx.globalAlpha = boom.flash;
+    ctx.fillStyle   = "rgba(255,255,255,1)";
+    ctx.fillRect(0, 0, W, H);
+  }
+  ctx.globalAlpha = boom.hitRobot ? 0.65 : 0.45;
+  ctx.beginPath();
+  ctx.arc(boom.x, boom.y, (boom.hitRobot ? 26:18) + boom.t*(boom.hitRobot ? 110:70), 0, Math.PI*2);
+  ctx.strokeStyle = "rgba(250,204,21,0.9)"; ctx.lineWidth = boom.hitRobot ? 5 : 3; ctx.stroke();
+  for (const p of boom.parts) {
+    ctx.globalAlpha = clamp(p.life, 0, 1);
+    ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+    ctx.fillStyle = boom.hitRobot ? "rgba(255,210,80,0.92)" : "rgba(96,165,250,0.85)";
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ─── Main draw ────────────────────────────────────────────────────────────────
+function draw() {
+  drawSky();
+  drawGrid();
+  drawGround();
+
+  drawRoof(leftRobot.roof,  leftRobot.color);
+  drawRoof(rightRobot.roof, rightRobot.color);
+
+  for (const b of buildings) drawBuilding(b);
+  drawBillboards();
+
+  drawRobot(leftRobot, "L");
+  if (!rightRobotGone) drawRobot(rightRobot, "R");
+
+  if (predTri1) drawSlopeTriangle(predTri1);
+  if (predTri2) drawSlopeTriangle(predTri2);
+
+  drawRocket();
+  drawExplosion();
+}
+
+// ─── Loop ─────────────────────────────────────────────────────────────────────
+let last = performance.now();
+function loop(ts) {
+  const dt = Math.min(0.05, (ts - last) / 1000);
+  last = ts;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────────────
+makeCity();
+spawnRocket();
+titleOverlay.style.display = "flex";
+requestAnimationFrame(loop);
+
+})();
+</script>
+</body>
+</html>

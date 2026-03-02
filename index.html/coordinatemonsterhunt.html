@@ -1,0 +1,1706 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta name="Document-Policy" content="force-load-at-top">
+<meta name="description" content="Master the Cartesian plane by hunting monsters! A distraction-free coordinate graphing game designed for student proficiency and intrinsic math mastery." />
+<title>Coordinate Monster Hunt | Math Mastery Game</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-KXJSM28W41"></script>
+<script>
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+
+gtag('config', 'G-KXJSM28W41');
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{
+--bg:#0f172a; /* slate-900 */
+--panel:#111827; /* gray-900 */
+--text:#e5e7eb; /* gray-200 */
+--muted:#9ca3af; /* gray-400 */
+--grid:#334155; /* slate-700 */
+--axis:#e5e7eb; /* gray-200 */
+--accent:#22c55e; /* green-500 */
+--warn:#f59e0b; /* amber-500 */
+--bad:#ef4444; /* red-500 */
+}
+
+body{
+margin:0;
+font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+background: linear-gradient(180deg, var(--bg), #020617);
+color: var(--text);
+display:flex;
+min-height:100vh;
+align-items:center;
+justify-content:center;
+padding:18px;
+box-sizing:border-box;
+}
+
+.wrap{
+width:min(980px, 100%);
+display:grid;
+grid-template-columns: 1.3fr 0.7fr;
+gap:16px;
+}
+
+.card{
+background: rgba(17,24,39,0.92);
+border: 1px solid rgba(148,163,184,0.18);
+border-radius:14px;
+padding:14px;
+box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+.monsterWindow{
+margin-top: 12px;
+height: 110px;
+border-radius: 12px;
+border: 1px solid rgba(148,163,184,0.18);
+background:#0b1220;
+display:flex;
+align-items:center;
+justify-content:center;
+position:relative;
+overflow:hidden;
+}
+
+.titleButtons{
+display:flex;
+flex-direction:column;
+gap:12px;
+margin-top:18px;
+}
+
+.titleButtons button{
+width: 100%;
+}
+
+.monsterBig{
+font-size: 64px;
+transform: scale(1);
+transition: transform 120ms ease;
+}
+
+.monsterBoom{
+position:absolute;
+font-size: 80px;
+opacity: 0;
+transform: scale(0.3);
+pointer-events:none;
+}
+
+.monsterBoom.boom{
+animation: boomPop 420ms ease-out forwards;
+}
+
+@keyframes boomPop{
+0% { opacity: 0; transform: scale(0.2) rotate(0deg); }
+20% { opacity: 1; transform: scale(1.15) rotate(5deg); }
+100% { opacity: 0; transform: scale(1.8) rotate(-5deg); }
+}
+canvas{
+width:100%;
+height:auto;
+border-radius:12px;
+background: #0b1220;
+border:1px solid rgba(148,163,184,0.18);
+display:block;
+}
+h1{
+font-size:18px;
+margin:0 0 8px 0;
+font-weight:650;
+letter-spacing:0.2px;
+}
+.sub{
+color: var(--muted);
+font-size:13px;
+margin:0 0 12px 0;
+line-height:1.3;
+}
+
+.row{
+display:flex;
+gap:10px;
+flex-wrap:wrap;
+align-items:center;
+margin:10px 0;
+}
+
+label{
+font-size:13px;
+color: var(--muted);
+}
+
+input{
+width:88px;
+padding:10px 10px;
+border-radius:10px;
+border:1px solid rgba(148,163,184,0.25);
+background:#0b1220;
+color:var(--text);
+font-size:15px;
+outline:none;
+}
+input:focus{
+border-color: rgba(34,197,94,0.55);
+box-shadow: 0 0 0 3px rgba(34,197,94,0.15);
+}
+
+button{
+padding:10px 12px;
+border-radius:10px;
+border:1px solid rgba(148,163,184,0.25);
+background: #0b1220;
+color: var(--text);
+font-weight:600;
+cursor:pointer;
+}
+button:hover{
+border-color: rgba(34,197,94,0.55);
+}
+button.primary{
+background: rgba(34,197,94,0.15);
+border-color: rgba(34,197,94,0.55);
+}
+
+.stats{
+display:grid;
+grid-template-columns: 1fr 1fr;
+gap:10px;
+margin-top:8px;
+}
+.pill{
+background:#0b1220;
+border:1px solid rgba(148,163,184,0.18);
+border-radius:12px;
+padding:10px;
+font-size:13px;
+color:var(--muted);
+}
+.pill b{
+color:var(--text);
+display:block;
+font-size:16px;
+margin-top:2px;
+}
+
+/* ===== Make specific pills POP ===== */
+.pill.popTimer, .pill.popBest{
+position: relative;
+overflow: hidden;
+border-radius: 999px;
+border: 1px solid rgba(255,255,255,.16);
+background: rgba(2,6,23,.55);
+backdrop-filter: blur(8px);
+box-shadow: 0 18px 45px rgba(0,0,0,.22);
+}
+
+/* BIGGER number inside those pills */
+.pill.popTimer .pillValue,
+.pill.popBest .pillValue{
+font-size: 28px;
+font-weight: 1000;
+letter-spacing: -0.5px;
+text-shadow: 0 12px 26px rgba(0,0,0,.35);
+}
+
+/* Timer theme (electric blue) */
+.pill.popTimer{
+background: linear-gradient(180deg, rgba(37,99,235,.30), rgba(2,6,23,.55));
+box-shadow:
+0 22px 55px rgba(37,99,235,.16),
+inset 0 0 0 1px rgba(37,99,235,.14);
+}
+
+/* Best theme (neon green) */
+.pill.popBest{
+background: linear-gradient(180deg, rgba(34,197,94,.24), rgba(2,6,23,.55));
+box-shadow:
+0 22px 55px rgba(34,197,94,.14),
+inset 0 0 0 1px rgba(34,197,94,.12);
+}
+
+/* Shimmer sweep */
+.pill.popTimer::after,
+.pill.popBest::after{
+content:"";
+position:absolute;
+inset:-40% -60%;
+background: linear-gradient(90deg, transparent, rgba(255,255,255,.18), transparent);
+transform: translateX(-120%);
+opacity:.55;
+pointer-events:none;
+}
+.pill.popTimer.shimmer::after,
+.pill.popBest.shimmer::after{
+animation: shimmer 1.25s ease-in-out infinite;
+}
+@keyframes shimmer{
+0% { transform: translateX(-120%); }
+100% { transform: translateX(120%); }
+}
+
+/* Low-time pulse (under 10s) */
+.pill.popTimer.low{
+animation: pulseLow .75s ease-in-out infinite;
+border-color: rgba(251,113,133,.35);
+}
+@keyframes pulseLow{
+0%,100% { transform: scale(1); filter: brightness(1); }
+50% { transform: scale(1.035); filter: brightness(1.18); }
+}
+
+/* New-best pop */
+.pill.popBest.newBest{
+animation: popBest .35s ease-out 1;
+}
+@keyframes popBest{
+0% { transform: scale(1); }
+45% { transform: scale(1.08); }
+100% { transform: scale(1); }
+}
+
+.msg{
+margin-top:10px;
+padding:10px;
+border-radius:12px;
+border:1px solid rgba(148,163,184,0.18);
+background:#0b1220;
+color: var(--text);
+min-height:44px;
+display:flex;
+align-items:center;
+line-height:1.25;
+}
+.msg.good{ border-color: rgba(34,197,94,0.45); }
+.msg.bad{ border-color: rgba(239,68,68,0.45); }
+.msg.warn{ border-color: rgba(245,158,11,0.45); }
+
+.hint{
+margin-top:10px;
+color:var(--muted);
+font-size:12px;
+line-height:1.35;
+}
+
+@media (max-width: 860px){
+.wrap{ grid-template-columns: 1fr; }
+}
+.titleScreen{
+position: fixed;
+inset: 0;
+background: linear-gradient(180deg, #020617, #0f172a);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index: 999;
+}
+
+.titleCard{
+background: rgba(17,24,39,0.95);
+border: 1px solid rgba(148,163,184,0.25);
+padding: 40px 50px;
+border-radius: 18px;
+text-align:center;
+box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.titleCard h1{
+font-family: 'Orbitron', sans-serif;
+font-size: 32px;
+color: #22c55e;
+text-shadow:
+0 0 5px #22c55e,
+0 0 10px #22c55e,
+0 0 20px #22c55e;
+}
+
+.titleCard h1{
+text-shadow:
+0 0 6px #22c55e,
+0 0 14px #22c55e,
+0 0 24px #22c55e;
+}
+
+.countdownOverlay{
+position:fixed;
+inset:0;
+background:rgba(2,6,23,0.95);
+display:flex;
+align-items:center;
+justify-content:center;
+z-index:1000;
+}
+
+.countdownOverlay.hidden{
+display:none;
+}
+
+.countdownText{
+font-family:'Orbitron', sans-serif;
+font-size:80px;
+letter-spacing:6px;
+color:#22c55e;
+text-shadow:0 0 20px rgba(34,197,94,0.6);
+opacity:0;
+transition:opacity 0.4s ease;
+}
+/* Countdown overlay */
+.countdownOverlay{
+position: fixed;
+inset: 0;
+display:flex;
+align-items:center;
+justify-content:center;
+background: rgba(2,6,23,0.78);
+z-index: 1000;
+}
+
+.countText{
+font-family: 'Orbitron', sans-serif;
+font-size: 72px;
+letter-spacing: 2px;
+color: #22c55e;
+text-shadow: 0 0 10px rgba(34,197,94,0.9), 0 0 30px rgba(34,197,94,0.6);
+}
+
+/* Shake effect */
+@keyframes screenShake {
+0% { transform: translate(0,0) rotate(0deg); }
+10% { transform: translate(-10px, 6px) rotate(-1deg); }
+20% { transform: translate(8px, -8px) rotate(1deg); }
+30% { transform: translate(-8px, -6px) rotate(0deg); }
+40% { transform: translate(10px, 8px) rotate(1deg); }
+50% { transform: translate(-10px, 6px) rotate(-1deg); }
+60% { transform: translate(8px, 8px) rotate(0deg); }
+70% { transform: translate(-8px, -8px) rotate(1deg); }
+80% { transform: translate(10px, -6px) rotate(0deg); }
+90% { transform: translate(-10px, 8px) rotate(-1deg); }
+100% { transform: translate(0,0) rotate(0deg); }
+}
+
+.countdownOverlay.shake{
+animation: screenShake 1.4s linear both;
+}
+
+#blitzTimerPill,
+#blitzBestPill {
+display: none;
+}
+
+.titleCard p{
+color:#9ca3af;
+margin-bottom: 24px;
+}
+.hidden { display: none !important; }
+
+/* =========================
+BLITZ-ONLY VISUAL EFFECTS
+========================= */
+
+/* By default, do NOT let shimmer/pop do anything anywhere */
+.shimmer,
+.popTimer,
+.popBest {
+animation: none !important;
+box-shadow: none !important;
+filter: none !important;
+}
+
+body.blitzActive #levelInstructions {
+display: none;
+}
+
+/* Only when body has .blitzActive do those effects turn on */
+body.blitzActive .shimmer {
+animation: shimmer 1.6s linear infinite !important;
+}
+/* Hide level instructions during Blitz */
+body.blitzActive #levelInstructions {
+display: none;
+}
+
+body.blitzActive .popTimer,
+body.blitzActive .popBest {
+animation: popPulse 1.1s ease-in-out infinite !important;
+box-shadow: 0 0 18px rgba(255,255,255,.18) !important;
+}
+
+/* =========================
+HARD LOCK: BLITZ PILL VISIBILITY
+========================= */
+
+/* Default: NEVER show Blitz pills */
+#blitzTimerPill,
+#blitzBestPill {
+display: none !important;
+visibility: hidden !important;
+opacity: 0 !important;
+pointer-events: none !important;
+}
+
+/* Only show them during Blitz */
+body.blitzActive #blitzTimerPill,
+body.blitzActive #blitzBestPill {
+display: flex !important;
+visibility: visible !important;
+opacity: 1 !important;
+pointer-events: auto !important;
+}
+
+/* Hide standard timer + total boxes during Blitz */
+body.blitzActive #timerOut,
+body.blitzActive #totalOut {
+display: none !important;
+}
+
+body.blitzActive #timerLabel,
+body.blitzActive #totalLabel {
+display: none !important;
+}
+/* ===== BLITZ TIMER COLOR STATES ===== */
+
+.pill.popTimer.timeHigh{
+background: linear-gradient(180deg, rgba(59,130,246,.35), rgba(2,6,23,.6));
+box-shadow: 0 0 25px rgba(59,130,246,.25);
+}
+
+.pill.popTimer.timeMid{
+background: linear-gradient(180deg, rgba(34,197,94,.35), rgba(2,6,23,.6));
+box-shadow: 0 0 28px rgba(34,197,94,.35);
+}
+
+.pill.popTimer.timeLow{
+background: linear-gradient(180deg, rgba(245,158,11,.35), rgba(2,6,23,.6));
+box-shadow: 0 0 30px rgba(245,158,11,.45);
+}
+
+.pill.popTimer.timeCritical{
+background: linear-gradient(180deg, rgba(239,68,68,.45), rgba(2,6,23,.6));
+box-shadow: 0 0 35px rgba(239,68,68,.6);
+animation: criticalFlicker .6s infinite alternate;
+}
+
+/* ===== Timer Number Color States ===== */
+
+.pill.popTimer.timeHigh .pillValue{
+color: #60a5fa; /* blue-400 */
+text-shadow: 0 0 12px rgba(96,165,250,.8);
+}
+
+.pill.popTimer.timeMid .pillValue{
+color: #22c55e; /* green-500 */
+text-shadow: 0 0 14px rgba(34,197,94,.8);
+}
+
+.pill.popTimer.timeLow .pillValue{
+color: #f59e0b; /* amber-500 */
+text-shadow: 0 0 16px rgba(245,158,11,.9);
+}
+
+.pill.popTimer.timeCritical .pillValue{
+color: #ef4444; /* red-500 */
+text-shadow: 0 0 20px rgba(239,68,68,1);
+}
+#studioWatermark{
+position: fixed;
+bottom: 18px;
+right: 24px;
+font-size: 12px;
+letter-spacing: 3px;
+text-transform: uppercase;
+font-weight: 700;
+color: rgba(34,197,94,0.55);
+text-shadow: 0 0 8px rgba(34,197,94,0.35);
+pointer-events: none;
+z-index: 2000;
+}
+
+/* Final 5 seconds flicker */
+@keyframes criticalFlicker{
+from { filter: brightness(1); }
+to { filter: brightness(1.35); }
+}
+</style>
+</head>
+<body>
+<div id="studioWatermark">Wild Lange’n Productions™</div>
+<div id="titleScreen" class="titleScreen">
+<div class="titleCard">
+<h1>👾 Coordinate Monster Hunt 👾</h1>
+<p>Type coordinates to eliminate monsters.<br>
+Survive all levels. Defeat the boss.</p>
+
+<button id="playLevelsBtn" class="primary"> Play Levels</button>
+<button id="blitzBtn">3-Minute Monster Blitz</button>
+</div>
+</div>
+
+<div id="countdownOverlay" class="countdownOverlay hidden">
+<div id="countdownText" class="countdownText">READY</div>
+</div>
+
+
+<!-- Victory Screen (Levels/Boss) -->
+<div id="victoryScreen" class="titleScreen" style="display:none;">
+<div class="titleCard">
+<h1>🏆 Victory! 🏆</h1>
+<p>You defeated the Boss Monster.</p>
+<button id="victoryBtn" class="primary">Return to Monster Hunt</button>
+</div>
+</div>
+
+<!-- Blitz End Screen -->
+<div id="blitzEndScreen" class="titleScreen" style="display:none;">
+<div class="titleCard">
+<h1>🎯 Stupendous Shooting! 🎯</h1>
+<p id="blitzResultText">YOU DESTROYED 0 MONSTERS!!!</p>
+<button id="blitzReturnBtn" class="primary">Return to Monster Hunt</button>
+</div>
+</div>
+<div class="wrap">
+<div class="card">
+<h1>Coordinate Monster Hunt</h1>
+<p class="sub">
+Type the monster’s coordinate to “zap” it.
+Grid is <b>-10 to 10</b> on both axes, labeled and numbered.
+</p>
+
+<p id="levelInstructions" class="sub">
+Levels: L1 (no timer) → L2 (10s per monster) → L3 (5s per monster).
+Get <b>5 hits</b> each level.
+</p>
+
+<canvas id="board" width="720" height="720"></canvas>
+
+<div class="hint">
+Tip: You can use the arrow keys / touchpad to stay sane, but your students just need to type <b>x</b> and <b>y</b>.
+</div>
+</div>
+
+<div class="card">
+<div class="row">
+<button id="startBtn" class="primary">Start / Restart</button>
+<button id="pauseBtn">Pause</button>
+</div>
+
+<div class="row">
+<div>
+<label for="xIn">x</label><br/>
+<input id="xIn" inputmode="numeric" autocomplete="off" placeholder="e.g. -3"/>
+</div>
+<div>
+<label for="yIn">y</label><br/>
+<input id="yIn" inputmode="numeric" autocomplete="off" placeholder="e.g. 7"/>
+</div>
+<div style="align-self:flex-end">
+<button id="fireBtn" class="primary">Submit</button>
+</div>
+</div>
+
+<div id="hudArea">
+<div class="stats" id="standardStats">
+<div class="pill"><span id="levelLabel">Level</span><b id="levelOut">1</b></div>
+<div class="pill"><span id="hitsLabel">Hits this level</span><b id="hitsOut">0 / 5</b></div>
+<div class="pill"><span id="timerLabel">Timer</span><b id="timerOut">∞</b></div>
+<div class="pill"><span id="totalLabel">Total Hits</span><b id="totalOut">0</b></div>
+</div>
+
+<!-- Blitz-only HUD lives in the SAME “slot” -->
+<div id="blitzStats">
+<div class="pill popTimer shimmer" id="blitzTimerPill">
+<span class="pillLabel">Time</span>
+<span class="pillValue" id="blitzTimer">180</span>
+</div>
+
+<div class="pill popBest shimmer" id="blitzBestPill">
+<span class="pillLabel">Personal Best (Device)</span>
+<span class="pillValue" id="bestBlitz">0</span>
+</div>
+</div>
+</div>
+
+<div id="msg" class="msg">Press <b>Start</b> to begin.</div>
+
+<div class="hint">
+The focus of this game is recognition that the x input moves the crosshair
+horizontally (left to right) and the y input moves the crosshair
+vertically(up and down).
+
+<div id="monsterWindow" class="monsterWindow">
+<div id="monsterBig" class="monsterBig">👾</div>
+<div id="monsterBoom" class="monsterBoom" aria-hidden="true">💥</div>
+
+</div>
+</div>
+</div>
+</div>
+
+<script>
+(() => {
+// ====== CONFIG ======
+const GRID_MIN = -10;
+const GRID_MAX = 10;
+const TARGETS_PER_LEVEL = 7;
+
+const BLITZ_SECONDS = 180;
+
+const LEVELS = [
+{ level: 1, secondsPerMonster: Infinity },
+{ level: 2, secondsPerMonster: 10 },
+{ level: 3, secondsPerMonster: 10 },
+];
+
+// ====== BOSS CONFIG ======
+const BOSS_MOVE_MS = 1200; // “alive” movement rhythm
+const BOSS_RING_SECONDS = 3; // relocate if you don't hit in time
+const BOSS_SHIELD_HITS = 2; // 2 hits to break shield, then final hit
+
+// ====== DOM ======
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const monsterBig = document.getElementById("monsterBig");
+const monsterBoom = document.getElementById("monsterBoom");
+
+const countdownOverlay = document.getElementById("countdownOverlay");
+const countdownText = document.getElementById("countdownText");
+const blitzTimerOvalValue = document.getElementById("dashTime");
+const startBtn = document.getElementById("startBtn");
+const playLevelsBtn = document.getElementById("playLevelsBtn");
+const blitzBtn = document.getElementById("blitzBtn");
+const pauseBtn = document.getElementById("pauseBtn");
+const fireBtn = document.getElementById("fireBtn");
+
+const xIn = document.getElementById("xIn");
+const yIn = document.getElementById("yIn");
+
+const levelOut = document.getElementById("levelOut");
+const hitsOut = document.getElementById("hitsOut");
+const levelLabel = document.getElementById("levelLabel");
+const hitsLabel = document.getElementById("hitsLabel");
+const timerLabel = document.getElementById("timerLabel");
+const totalLabel = document.getElementById("totalLabel");
+const timerOut = document.getElementById("timerOut");
+const totalOut = document.getElementById("totalOut");
+const msgEl = document.getElementById("msg");
+
+const victoryScreen = document.getElementById("victoryScreen");
+const victoryBtn = document.getElementById("victoryBtn");
+
+const blitzEndScreen = document.getElementById("blitzEndScreen");
+const blitzResultText = document.getElementById("blitzResultText");
+const blitzReturnBtn = document.getElementById("blitzReturnBtn");
+const titleScreen = document.getElementById("titleScreen");
+const titleStartBtn = document.getElementById("titleStartBtn");
+
+function hideTitleScreen(){
+titleScreen.classList.add("hidden");
+}
+
+function showTitleScreen(){
+titleScreen.classList.remove("hidden");
+}
+
+function setBlitzTimerUI(secondsLeft){
+const pill = document.getElementById("blitzTimerPill");
+const el = document.getElementById("blitzTimer");
+if(!pill || !el) return;
+
+const s = Math.max(0, secondsLeft);
+
+// Remove old state classes
+pill.classList.remove("timeHigh","timeMid","timeLow","timeCritical");
+
+// Add color state
+if (s > 60) {
+pill.classList.add("timeHigh"); // blue
+} else if (s > 20) {
+pill.classList.add("timeMid"); // green
+} else if (s > 5) {
+pill.classList.add("timeLow"); // amber
+} else {
+pill.classList.add("timeCritical"); // red danger
+}
+
+// Format display
+if (s <= 10) {
+el.textContent = (Math.ceil(s * 10) / 10).toFixed(1);
+} else {
+const total = Math.ceil(s);
+const m = Math.floor(total / 60);
+const sec = String(total % 60).padStart(2,"0");
+el.textContent = `${m}:${sec}`;
+}
+}
+
+function setBestBlitzUI(best){
+const el = document.getElementById("bestBlitz");
+if(!el) return;
+el.textContent = String(best);
+}
+
+function setBlitzPillsVisible(on){
+document.body.classList.toggle("blitzActive", !!on);
+}
+
+// ====== STATE ======
+let running = false;
+let paused = false;
+
+let levelIndex = 0;
+let hitsThisLevel = 0;
+let totalHits = 0;
+
+let monster = { x: 0, y: 0 };
+let monsterSpawnedAt = 0;
+let monsterExpiresAt = Infinity;
+
+// ======== MODE STATE ======
+let mode = "levels"; // "levels" or "blitz"
+
+let isBlitz = false;
+let blitzEndsAt = 0;
+let blitzHits = 0; // use ONE scoring variable
+let blitzBest = 0;
+let isBoss = false;
+let bossShield = BOSS_SHIELD_HITS;
+let bossLastMoveAt = 0;
+
+
+// bossLine:
+// { slopeNum, slopeDen, mText, b, points:[{x,y}...], idx, dir }
+let bossLine = null;
+
+let rafId = null;
+let timerInterval = null;
+
+// ====== CROSSHAIR ======
+const PAD = 56;
+let crosshair = { on:false, px:0, py:0, gridX:0, gridY:0 };
+let crosshairMode = "typed"; // set to "pointer" if you want hover aiming
+
+function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+function randInt(min, max){ return Math.floor(Math.random()*(max-min+1)) + min; }
+
+// ====== BLITZ BEST (device-local) ======
+const BLITZ_BEST_KEY = "cmh_blitz_best_v1";
+
+function getBestBlitz(){
+try{
+const raw = localStorage.getItem(BLITZ_BEST_KEY);
+const n = Number(raw);
+return Number.isFinite(n) ? n : 0;
+}catch(e){
+return 0;
+}
+}
+function setBestBlitzStorage(v){
+try{
+localStorage.setItem(BLITZ_BEST_KEY, String(v));
+}catch(e){}
+}
+
+function getLayout(){
+const w = canvas.width;
+const h = canvas.height;
+const innerW = w - PAD * 2;
+const innerH = h - PAD * 2;
+const range = GRID_MAX - GRID_MIN;
+const cell = innerW / range;
+return { w, h, innerW, innerH, range, cell };
+}
+
+function gridToPixel(gx, gy){
+const { cell } = getLayout();
+const px = PAD + (gx - GRID_MIN) * cell;
+const py = PAD + (GRID_MAX - gy) * cell;
+return { px, py };
+}
+
+function pixelToGrid(px, py){
+const { cell, innerW, innerH } = getLayout();
+const clampedX = clamp(px, PAD, PAD + innerW);
+const clampedY = clamp(py, PAD, PAD + innerH);
+const rawGX = GRID_MIN + (clampedX - PAD) / cell;
+const rawGY = GRID_MAX - (clampedY - PAD) / cell;
+const gx = clamp(Math.round(rawGX), GRID_MIN, GRID_MAX);
+const gy = clamp(Math.round(rawGY), GRID_MIN, GRID_MAX);
+return { gx, gy };
+}
+
+function setCrosshairGrid(gx, gy){
+const snapped = gridToPixel(gx, gy);
+crosshair.on = true;
+crosshair.gridX = gx;
+crosshair.gridY = gy;
+crosshair.px = snapped.px;
+crosshair.py = snapped.py;
+}
+
+function setCrosshairPixel(px, py){
+const { gx, gy } = pixelToGrid(px, py);
+setCrosshairGrid(gx, gy);
+}
+
+function drawCrosshair(){
+if (!crosshair.on) return;
+
+ctx.save();
+ctx.lineWidth = 8;
+ctx.strokeStyle = "rgba(34,197,94,0.95)";
+ctx.shadowColor = "rgba(0,0,0,0.4)";
+ctx.shadowBlur = 6;
+
+const x = crosshair.px;
+const y = crosshair.py;
+const arm = 24;
+
+ctx.beginPath();
+ctx.moveTo(x - arm, y); ctx.lineTo(x + arm, y);
+ctx.moveTo(x, y - arm); ctx.lineTo(x, y + arm);
+ctx.stroke();
+
+ctx.shadowBlur = 0;
+ctx.fillStyle = "rgba(255,255,255,0.95)";
+ctx.beginPath();
+ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+ctx.fill();
+
+ctx.restore();
+}
+
+function parsePartialInt(s){
+const t = String(s ?? "").trim();
+if (t === "" || t === "-" || t === "+") return null;
+if (!/^[-+]?\d+$/.test(t)) return undefined;
+return Number(t);
+}
+
+function updateCrosshairFromInputs(){
+const xVal = parsePartialInt(xIn.value);
+const yVal = parsePartialInt(yIn.value);
+if (xVal === undefined || yVal === undefined) return;
+
+let gx = crosshair.gridX;
+let gy = crosshair.gridY;
+
+if (xVal !== null) gx = clamp(xVal, GRID_MIN, GRID_MAX);
+if (yVal !== null) gy = clamp(yVal, GRID_MIN, GRID_MAX);
+
+setCrosshairGrid(gx, gy);
+draw();
+}
+
+// ====== HUD / MSG ======
+function setMessage(text, kind=""){
+msgEl.classList.remove("good","bad","warn");
+if(kind) msgEl.classList.add(kind);
+msgEl.innerHTML = text;
+}
+
+function exitBlitzState(){
+mode = "levels";
+isBlitz = false;
+document.body.classList.remove("blitzActive");
+blitzEndsAt = 0;
+// optional: if you added #blitzStats swap logic
+// (no harm if it exists)
+}
+
+function currentLevel(){ return LEVELS[levelIndex]; }
+
+function updateHUD(){
+if(mode === "blitz"){
+// Labels switch for Blitz
+levelLabel.textContent = "Mode";
+hitsLabel.textContent = "Destroyed";
+timerLabel.textContent = "Time Left";
+totalLabel.textContent = "Best (Device)";
+
+levelOut.textContent = "BLITZ";
+hitsOut.textContent = String(blitzHits);
+
+document.getElementById("blitzTimerPill").style.display = "flex";
+document.getElementById("blitzBestPill").style.display = "flex";
+
+const leftMs = Math.max(0, blitzEndsAt - performance.now());
+const totalSec = Math.ceil(leftMs / 1000);
+const m = String(Math.floor(totalSec / 60));
+const s = String(totalSec % 60).padStart(2,"0");
+timerOut.textContent = `${m}:${s}`;
+
+totalOut.textContent = String(getBestBlitz());
+return;
+}
+
+// Labels switch back for Levels
+levelLabel.textContent = "Level";
+hitsLabel.textContent = "Hits this level";
+timerLabel.textContent = "Timer";
+totalLabel.textContent = "Total Hits";
+
+levelOut.textContent = String(currentLevel().level);
+hitsOut.textContent = `${hitsThisLevel} / ${TARGETS_PER_LEVEL}`;
+totalOut.textContent = String(totalHits);
+
+const secs = currentLevel().secondsPerMonster;
+if(!isFinite(secs)){
+timerOut.textContent = "∞";
+return;
+}
+
+if(!running){
+timerOut.textContent = `${secs}s`;
+return;
+}
+
+const now = performance.now();
+const left = Math.max(0, (monsterExpiresAt - now) / 1000);
+timerOut.textContent = `${left.toFixed(1)}s`;
+}
+
+// ====== GAME SPAWN ======
+function spawnMonster(){
+isBoss = false;
+bossLine = null;
+
+monster.x = randInt(GRID_MIN, GRID_MAX);
+monster.y = randInt(GRID_MIN, GRID_MAX);
+
+const now = performance.now();
+monsterSpawnedAt = now;
+
+const secs = currentLevel().secondsPerMonster;
+monsterExpiresAt = isFinite(secs) ? now + secs * 1000 : Infinity;
+}
+
+function spawnBlitzMonster(){
+// Blitz ignores level timers—just keep monsters coming.
+monster.x = randInt(GRID_MIN, GRID_MAX);
+monster.y = randInt(GRID_MIN, GRID_MAX);
+
+const now = performance.now();
+monsterSpawnedAt = now;
+monsterExpiresAt = Infinity; // no per-monster countdown in Blitz
+}
+
+// ====== BOSS LINE MATH ======
+function gcd(a,b){
+a = Math.abs(a); b = Math.abs(b);
+while(b !== 0){ const t=b; b=a%b; a=t; }
+return a;
+}
+
+function slopeToText(num, den){
+if (den === 1) return `${num}`;
+if (Math.abs(num) === den) return `${num/den}`;
+return `${num}/${den}`;
+}
+
+function generateSlopePool(){
+const slopes = [];
+for(let num=-5; num<=5; num++){
+if(num === 0) continue;
+for(let den=1; den<=5; den++){
+const g = gcd(num, den);
+const rn = num / g;
+const rd = den / g;
+if(!slopes.some(s => s.num === rn && s.den === rd)){
+slopes.push({ num: rn, den: rd });
+}
+}
+}
+return slopes;
+}
+
+// integer grid points for y = (num/den)x + b (no floating errors)
+function buildLinePointsFromFrac(num, den, b){
+const pts = [];
+for(let x=GRID_MIN; x<=GRID_MAX; x++){
+const nx = num * x;
+if (nx % den !== 0) continue; // only integer y
+const y = (nx / den) + b;
+if (y >= GRID_MIN && y <= GRID_MAX) pts.push({ x, y });
+}
+return pts;
+}
+
+function generateBossLine(avoidX, avoidY){
+const slopes = generateSlopePool();
+
+for(let tries=0; tries<200; tries++){
+const frac = slopes[randInt(0, slopes.length - 1)];
+const b = randInt(GRID_MIN, GRID_MAX);
+
+const points = buildLinePointsFromFrac(frac.num, frac.den, b);
+if(points.length < 5) continue;
+
+const allowed = points.filter(p => !(p.x === avoidX && p.y === avoidY));
+if(allowed.length < 3) continue;
+
+// pick idx from allowed, then map back to original points index
+const pick = allowed[randInt(0, allowed.length - 1)];
+const idx = points.findIndex(p => p.x === pick.x && p.y === pick.y);
+const dir = Math.random() < 0.5 ? 1 : -1;
+
+return {
+slopeNum: frac.num,
+slopeDen: frac.den,
+mText: slopeToText(frac.num, frac.den),
+b,
+points,
+idx,
+dir
+};
+}
+
+return null;
+}
+
+function setBossToIndex(i){
+const p = bossLine.points[i];
+monster.x = p.x;
+monster.y = p.y;
+}
+
+function moveBoss(){
+if(!bossLine || !bossLine.points || bossLine.points.length < 2) return;
+
+bossLine.idx += bossLine.dir;
+
+if (bossLine.idx <= 0 || bossLine.idx >= bossLine.points.length - 1){
+bossLine.dir *= -1;
+bossLine.idx = clamp(bossLine.idx, 0, bossLine.points.length - 1);
+}
+
+setBossToIndex(bossLine.idx);
+
+const now = performance.now();
+bossLastMoveAt = now;
+monsterSpawnedAt = now;
+monsterExpiresAt = now + BOSS_RING_SECONDS * 1000;
+}
+
+function startBossFromLastSpot(lastX, lastY){
+isBoss = true;
+bossShield = BOSS_SHIELD_HITS;
+paused = false;
+pauseBtn.textContent = "Pause";
+
+bossLine = generateBossLine(lastX, lastY);
+
+if(bossLine){
+setBossToIndex(bossLine.idx);
+} else {
+// fallback: force a different spot
+monster.x = clamp(lastX + 1, GRID_MIN, GRID_MAX);
+monster.y = lastY;
+}
+
+setCrosshairGrid(0, 0);
+
+const now = performance.now();
+bossLastMoveAt = now;
+monsterSpawnedAt = now;
+monsterExpiresAt = now + BOSS_RING_SECONDS * 1000;
+
+updateHUD();
+
+if(bossLine){
+const bText = bossLine.b >= 0 ? `+ ${bossLine.b}` : `- ${Math.abs(bossLine.b)}`;
+setMessage(
+`👾 <b>BOSS FIGHT!</b> Break the shield (2 hits), then land the final hit. ` +
+`Boss moves on <b>y = (${bossLine.mText})x ${bText}</b>.`,
+"warn"
+);
+} else {
+setMessage(`👾 <b>BOSS FIGHT!</b> Break the shield (2 hits), then land the final hit.`, "warn");
+}
+
+draw();
+}
+
+// ====== LEVEL FLOW ======
+function nextLevel(){
+hitsThisLevel = 0;
+levelIndex++;
+
+if(levelIndex >= LEVELS.length){
+running = false;
+clearTimers();
+draw();
+setMessage(`✅ <b>You win!</b> Total hits: <b>${totalHits}</b>.`, "good");
+return;
+}
+
+spawnMonster();
+updateHUD();
+setMessage(`Level <b>${currentLevel().level}</b> started. Get <b>${TARGETS_PER_LEVEL}</b> hits.`, "warn");
+}
+
+function clearTimers(){
+if(rafId) cancelAnimationFrame(rafId);
+rafId = null;
+if(timerInterval) clearInterval(timerInterval);
+timerInterval = null;
+}
+
+function startCountdownThenGame(){
+const overlay = document.createElement("div");
+overlay.className = "countdownOverlay";
+overlay.innerHTML = `<div class="countText">Ready</div>`;
+document.body.appendChild(overlay);
+
+const text = overlay.querySelector(".countText");
+
+setTimeout(() => { text.textContent = "Set"; }, 1000);
+
+// Graph! + shake
+setTimeout(() => {
+text.textContent = "Graph!";
+overlay.classList.remove("shake"); // reset if clicked twice fast
+void overlay.offsetWidth; // force reflow to restart animation
+overlay.classList.add("shake");
+}, 2000);
+
+// Hold Graph! for an extra 1 second (total: 2s->4s)
+setTimeout(() => {
+overlay.remove();
+startGame();
+}, 4000);
+}
+
+function showTitleScreen(){
+titleScreen.style.display = "flex";
+}
+
+function hideTitleScreen(){
+titleScreen.style.display = "none";
+}
+
+function startBlitzMode(){
+// turn OFF other modes
+mode = "blitz";
+isBlitz = true;
+document.body.classList.add("blitzActive");
+isBoss = false;
+bossLine = null;
+
+running = true;
+paused = false;
+pauseBtn.textContent = "Pause";
+
+
+blitzHits = 0;
+blitzBest = getBestBlitz(); // ✅ load from localStorage
+setBestBlitzUI(blitzBest); // ✅ show on the oval
+blitzEndsAt = performance.now() + BLITZ_SECONDS * 1000;
+
+spawnBlitzMonster();
+setCrosshairGrid(0, 0);
+
+clearTimers();
+
+timerInterval = setInterval(() => {
+if(!running || paused) return;
+handleExpiration();
+updateHUD();
+}, 100);
+
+const loop = () => {
+if(!running) return;
+if(!paused){
+handleExpiration();
+draw();
+}
+rafId = requestAnimationFrame(loop);
+};
+loop();
+
+updateHUD();
+setMessage(`🔥 <b>Monster Blitz!</b> Destroy as many as you can in 3:00.`, "warn");
+
+xIn.value = "";
+yIn.value = "";
+xIn.focus();
+}
+
+function restartCurrentMode(){
+if (mode === "blitz") startBlitzMode();
+else startGame();
+}
+
+function startGame(){
+exitBlitzState();
+running = true;
+paused = false;
+
+levelIndex = 0;
+hitsThisLevel = 0;
+totalHits = 0;
+
+spawnMonster();
+setCrosshairGrid(0, 0);
+
+blitzHits = 0;
+blitzEndsAt = performance.now() + (BLITZ_SECONDS * 1000); // if you use BLITZ_SECONDS
+setBlitzTimerUI(BLITZ_SECONDS); // so it instantly shows 180
+
+clearTimers();
+timerInterval = setInterval(() => {
+if(!running || paused) return;
+handleExpiration();
+updateHUD();
+}, 100);
+
+const loop = () => {
+if(!running) return;
+if(!paused){
+handleExpiration();
+draw();
+}
+rafId = requestAnimationFrame(loop);
+};
+loop();
+
+updateHUD();
+setMessage(`Level <b>1</b>: No timer. Get <b>${TARGETS_PER_LEVEL}</b> hits.`, "warn");
+
+xIn.value = "";
+yIn.value = "";
+xIn.focus();
+}
+
+function togglePause(){
+if(!running) return;
+paused = !paused;
+pauseBtn.textContent = paused ? "Resume" : "Pause";
+setMessage(paused ? "⏸️ Paused." : "▶️ Resumed.", paused ? "warn" : "");
+if(!paused) xIn.focus();
+}
+
+function handleExpiration(){
+if(!running) return;
+
+const now = performance.now();
+
+if(isBlitz){
+const left = blitzEndsAt - now;
+// ✅ THIS makes the timer oval count down
+setBlitzTimerUI(left / 1000);
+if(left <= 0){
+running = false;
+clearTimers();
+
+// ✅ RIGHT HERE: when blitz ends, update + save best
+if (blitzHits > blitzBest) {
+blitzBest = blitzHits;
+
+try {
+if (typeof setBestBlitzStorage === "function") {
+setBestBlitzStorage(blitzBest);
+}
+} catch (e) {}
+
+try {
+if (typeof setBestBlitz === "function") {
+setBestBlitz(blitzBest);
+}
+} catch (e) {}
+}
+updateHUD();
+draw();
+
+blitzResultText.textContent = `YOU DESTROYED ${blitzHits} MONSTERS!!!`;
+blitzEndScreen.style.display = "flex";
+}
+return;
+}
+
+
+if(isBoss){
+// relocate if ring expires
+if(now >= monsterExpiresAt){
+moveBoss();
+}
+// also move periodically so it feels alive
+if(now - bossLastMoveAt >= BOSS_MOVE_MS){
+moveBoss();
+}
+return;
+}
+
+const secs = currentLevel().secondsPerMonster;
+if(!isFinite(secs)) return;
+
+if(now >= monsterExpiresAt){
+spawnMonster();
+setMessage(`⏱️ Too slow — the monster moved! Keep going.`, "warn");
+}
+}
+
+function parseIntStrict(s){
+if(s === null || s === undefined) return null;
+const t = String(s).trim();
+if(!/^[-+]?\d+$/.test(t)) return null;
+const n = Number(t);
+if(!Number.isInteger(n)) return null;
+return n;
+}
+
+function endBlitz(){
+// stop gameplay
+running = false;
+clearTimers();
+draw();
+
+document.getElementById("blitzTimerPill").style.display = "none";
+document.getElementById("blitzBestPill").style.display = "none";
+
+// update the end-card text
+blitzResultText.textContent = `YOU DESTROYED ${blitzHits} MONSTERS!!!`;
+
+// show the end card
+blitzEndScreen.style.display = "flex";
+}
+
+function boomUI(){
+monsterBig.style.transform = "scale(0.85)";
+monsterBoom.classList.remove("boom");
+void monsterBoom.offsetWidth;
+monsterBoom.classList.add("boom");
+setTimeout(() => { monsterBig.style.transform = "scale(1)"; }, 140);
+}
+
+function submitShot(){
+if(!running){
+setMessage(`Press <b>Start</b> first.`, "warn");
+return;
+}
+if(paused) return;
+
+const x = parseIntStrict(xIn.value);
+const y = parseIntStrict(yIn.value);
+
+if(x === null || y === null){
+setMessage(`Enter <b>integers</b> for x and y (example: <b>-3</b>, <b>7</b>).`, "warn");
+return;
+}
+if(x < GRID_MIN || x > GRID_MAX || y < GRID_MIN || y > GRID_MAX){
+setMessage(`Stay within the grid: x and y must be between <b>${GRID_MIN}</b> and <b>${GRID_MAX}</b>.`, "warn");
+return;
+}
+
+if(x === monster.x && y === monster.y){
+totalHits++;
+boomUI();
+
+// ===== BLITZ MODE =====
+if (isBlitz) {
+if (x === monster.x && y === monster.y) {
+boomUI();
+blitzHits++;
+spawnBlitzMonster();
+setCrosshairGrid(0, 0);
+xIn.value = ""; yIn.value = ""; xIn.focus();
+updateHUD();
+draw();
+return;
+} else {
+setMessage(`❌ Miss.`, "bad");
+xIn.value = ""; yIn.value = ""; xIn.focus();
+return;
+}
+}
+
+if(isBoss){
+// shield hits first
+if(bossShield > 0){
+bossShield--;
+if(bossShield === 1){
+setMessage(`🛡️ Shield cracked! One more hit to break it.`, "warn");
+} else {
+setMessage(`💥 Shield broken! Now finish the boss.`, "good");
+}
+moveBoss(); // boss reacts immediately
+setCrosshairGrid(0,0);
+} else {
+// final hit
+running = false;
+clearTimers();
+setCrosshairGrid(0,0);
+draw();
+
+victoryScreen.style.display = "flex";
+return;
+}
+
+xIn.value = ""; yIn.value = ""; xIn.focus();
+draw();
+updateHUD();
+return;
+}
+
+// normal monster hit
+hitsThisLevel++;
+setMessage(`💥 Hit! Monster was at (<b>${monster.x}</b>, <b>${monster.y}</b>).`, "good");
+
+if(hitsThisLevel >= TARGETS_PER_LEVEL){
+// after Level 2, start boss
+if(currentLevel().level === 2){
+const lastX = monster.x, lastY = monster.y;
+startBossFromLastSpot(lastX, lastY);
+xIn.value = ""; yIn.value = ""; xIn.focus();
+draw();
+updateHUD();
+return;
+} else {
+nextLevel();
+setCrosshairGrid(0,0);
+draw();
+xIn.value = ""; yIn.value = ""; xIn.focus();
+return;
+}
+}
+
+spawnMonster();
+setCrosshairGrid(0,0);
+draw();
+updateHUD();
+
+xIn.value = ""; yIn.value = ""; xIn.focus();
+return;
+}
+
+// miss (optional feedback)
+setMessage(`Miss — try again.`, "");
+xIn.select();
+}
+
+// ====== DRAW ======
+function draw(){
+const { w, h, innerW, innerH, range, cell } = getLayout();
+
+ctx.clearRect(0,0,w,h);
+ctx.fillStyle = "#0b1220";
+ctx.fillRect(0,0,w,h);
+
+// grid
+ctx.lineWidth = 1;
+ctx.strokeStyle = "rgba(51,65,85,0.9)";
+for(let i=0; i<=range; i++){
+const x = PAD + i*cell;
+const y = PAD + i*cell;
+ctx.beginPath(); ctx.moveTo(x, PAD); ctx.lineTo(x, PAD+innerH); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(PAD+innerW, y); ctx.stroke();
+}
+
+// axes
+const zeroX = PAD + (0 - GRID_MIN)*cell;
+const zeroY = PAD + (GRID_MAX - 0)*cell;
+
+ctx.lineWidth = 2;
+ctx.strokeStyle = "rgba(229,231,235,0.9)";
+ctx.beginPath(); ctx.moveTo(zeroX, PAD); ctx.lineTo(zeroX, PAD+innerH); ctx.stroke();
+ctx.beginPath(); ctx.moveTo(PAD, zeroY); ctx.lineTo(PAD+innerW, zeroY); ctx.stroke();
+
+// numbers
+ctx.fillStyle = "rgba(229,231,235,0.9)";
+ctx.font = "12px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+ctx.textAlign = "center";
+ctx.textBaseline = "top";
+for(let x=GRID_MIN; x<=GRID_MAX; x++){
+if(x === 0) continue;
+const px = PAD + (x - GRID_MIN)*cell;
+const py = zeroY + 6;
+ctx.fillText(String(x), px, py);
+}
+
+ctx.textAlign = "right";
+ctx.textBaseline = "middle";
+for(let y=GRID_MIN; y<=GRID_MAX; y++){
+if(y === 0) continue;
+const px = zeroX - 6;
+const py = PAD + (GRID_MAX - y)*cell;
+ctx.fillText(String(y), px, py);
+}
+
+ctx.textAlign = "left";
+ctx.textBaseline = "top";
+ctx.fillText("(0,0)", zeroX + 6, zeroY + 6);
+
+if(!running){
+ctx.fillStyle = "rgba(229,231,235,0.85)";
+ctx.font = "20px system-ui, -apple-system, Segoe UI, Roboto, Arial";
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+ctx.fillText("Press Start / Restart", w/2, h/2);
+drawCrosshair();
+return;
+}
+
+// monster icon
+const p = gridToPixel(monster.x, monster.y);
+
+ctx.save();
+ctx.textAlign = "center";
+ctx.textBaseline = "middle";
+let size = Math.max(28, cell * 1.2);
+if (isBoss){
+size *= 1.9; // adjust 1.6 – 2.3 to taste
+}
+ctx.font = `${size}px system-ui`;
+const bob = Math.cos(performance.now() * 0.006) * 4;
+ctx.fillText("👾", p.px, p.py + bob);
+ctx.restore();
+
+// shield ring (boss)
+if(isBoss && bossShield > 0){
+const shieldColor = (bossShield === 2)
+? "rgba(34,211,238,0.95)"
+: "rgba(245,158,11,0.95)";
+ctx.save();
+ctx.strokeStyle = shieldColor;
+ctx.lineWidth = 6;
+ctx.setLineDash([10, 8]);
+ctx.beginPath();
+ctx.arc(p.px, p.py, cell * 0.85, 0, Math.PI*2);
+ctx.stroke();
+ctx.restore();
+}
+
+// timer ring:
+// - normal levels: uses level seconds
+// - boss: uses BOSS_RING_SECONDS
+if(!paused){
+let fracLeft = 1;
+
+if(isBoss){
+const now = performance.now();
+fracLeft = clamp((monsterExpiresAt - now) / (BOSS_RING_SECONDS * 1000), 0, 1);
+} else {
+const secs = currentLevel().secondsPerMonster;
+if(isFinite(secs)){
+const now = performance.now();
+fracLeft = clamp((monsterExpiresAt - now) / (secs * 1000), 0, 1);
+} else {
+fracLeft = null;
+}
+}
+
+if(fracLeft !== null){
+ctx.strokeStyle = "rgba(245,158,11,0.95)";
+ctx.lineWidth = 4;
+ctx.beginPath();
+ctx.arc(p.px, p.py, cell * 0.95, -Math.PI/2, -Math.PI/2 + Math.PI*2*fracLeft);
+ctx.stroke();
+}
+}
+
+drawCrosshair();
+}
+
+// ====== EVENTS ======
+pauseBtn.addEventListener("click", togglePause);
+fireBtn.addEventListener("click", submitShot);
+startBtn.addEventListener("click", restartCurrentMode);
+
+playLevelsBtn.addEventListener("click", () => {
+exitBlitzState();
+hideTitleScreen();
+startCountdownThenGame();
+});
+
+blitzBtn.addEventListener("click", () => {
+hideTitleScreen();
+startBlitzMode();
+});
+
+blitzReturnBtn.addEventListener("click", () => {
+blitzEndScreen.style.display = "none";
+showTitleScreen();
+
+// reset state so you don't resume a dead Blitz run
+isBlitz = false;
+document.body.classList.remove("blitzActive");
+mode = "levels";
+running = false;
+paused = false;
+
+draw();
+updateHUD();
+setMessage(`Press <b>Start</b> to begin.`, "");
+});
+
+victoryBtn.addEventListener("click", () => {
+victoryScreen.style.display = "none";
+showTitleScreen();
+
+// fully reset state (ONLY when leaving victory)
+running = false;
+paused = false;
+levelIndex = 0;
+hitsThisLevel = 0;
+totalHits = 0;
+isBoss = false;
+bossLine = null;
+
+draw();
+updateHUD();
+setMessage(`Press <b>Start</b> to begin.`, "");
+});
+
+[xIn, yIn].forEach(inp => {
+inp.addEventListener("keydown", (e) => {
+if(e.key === "Enter") submitShot();
+});
+});
+
+xIn.addEventListener("input", updateCrosshairFromInputs);
+yIn.addEventListener("input", updateCrosshairFromInputs);
+
+// Pointer crosshair support (optional)
+canvas.style.touchAction = "none";
+function canvasClientToCanvasPx(clientX, clientY){
+const rect = canvas.getBoundingClientRect();
+const scaleX = canvas.width / rect.width;
+const scaleY = canvas.height / rect.height;
+return {
+px: (clientX - rect.left) * scaleX,
+py: (clientY - rect.top) * scaleY
+};
+}
+
+canvas.addEventListener("pointermove", (e) => {
+if (crosshairMode !== "pointer") return;
+const p = canvasClientToCanvasPx(e.clientX, e.clientY);
+setCrosshairPixel(p.px, p.py);
+draw();
+});
+
+canvas.addEventListener("pointerleave", () => {
+if (crosshairMode !== "pointer") return;
+crosshair.on = false;
+draw();
+});
+
+canvas.addEventListener("pointerdown", (e) => {
+if (crosshairMode !== "pointer") return;
+const p = canvasClientToCanvasPx(e.clientX, e.clientY);
+setCrosshairPixel(p.px, p.py);
+draw();
+});
+
+blitzBest = getBestBlitz();
+setBestBlitz(blitzBest); // updates the dashboard UI
+draw();
+updateHUD();
+setMessage(`Press <b>Start</b> to begin.`, "");
+})();
+</script>
+</body>
+</html>

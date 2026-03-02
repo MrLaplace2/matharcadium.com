@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<meta name="description" content="Math Arcadium — Where Math IS the Game. Free math games where the math is intrinsic to gameplay. No drill, no fluff. Just real math mastery."/>
+<title>Math Arcadium | Where Math IS the Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800;900&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+/* ── Reset & Variables ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #020817;
+  --panel:    rgba(10, 20, 50, 0.80);
+  --border:   rgba(255,255,255,0.09);
+  --text:     #e8edf5;
+  --muted:    #7a8aaa;
+  --green:    #22c55e;
+  --blue:     #38bdf8;
+  --yellow:   #fbbf24;
+  --coral:    #f43f5e;
+  --glow-g:   rgba(34,197,94,0.35);
+  --glow-b:   rgba(56,189,248,0.35);
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  font-family: 'Nunito', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── Animated grid background ──────────────────────────────────── */
+.gridBg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.gridBg canvas {
+  width: 100%;
+  height: 100%;
+}
+
+/* ── Layout ────────────────────────────────────────────────────── */
+.content {
+  position: relative;
+  z-index: 1;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────── */
+.hero {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  gap: 0;
+}
+
+.badge {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(34,197,94,0.40);
+  background: rgba(34,197,94,0.10);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+  opacity: 0;
+  animation: fadeUp 0.6s ease 0.2s forwards;
+}
+
+.hero h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(42px, 8vw, 96px);
+  font-weight: 900;
+  line-height: 0.95;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+  opacity: 0;
+  animation: fadeUp 0.7s ease 0.4s forwards;
+}
+
+.hero h1 .arc { color: var(--green); }
+.hero h1 .adium {
+  color: transparent;
+  -webkit-text-stroke: 2px rgba(56,189,248,0.70);
+}
+
+.tagline {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(13px, 2.5vw, 20px);
+  font-weight: 600;
+  color: var(--muted);
+  letter-spacing: 1px;
+  margin-bottom: 48px;
+  opacity: 0;
+  animation: fadeUp 0.7s ease 0.6s forwards;
+}
+
+.tagline em {
+  color: var(--yellow);
+  font-style: normal;
+  font-weight: 800;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeUp 0.7s ease 0.8s forwards;
+}
+
+.btn {
+  padding: 14px 32px;
+  border-radius: 12px;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+  display: inline-block;
+}
+
+.btn:hover { transform: translateY(-3px); filter: brightness(1.12); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow: 0 0 28px rgba(34,197,94,0.45);
+}
+
+.btn-secondary {
+  background: rgba(255,255,255,0.07);
+  color: var(--text);
+  border: 1px solid var(--border);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+/* Scroll indicator */
+.scrollHint {
+  position: absolute;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0;
+  animation: fadeUp 0.7s ease 1.2s forwards;
+}
+
+.scrollArrow {
+  width: 20px;
+  height: 20px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg);
+  animation: bounce 1.6s ease-in-out infinite;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: rotate(45deg) translateY(0); }
+  50% { transform: rotate(45deg) translateY(5px); }
+}
+
+/* ── Stats strip ────────────────────────────────────────────────── */
+.statsStrip {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.02);
+  overflow: hidden;
+}
+
+.statItem {
+  flex: 1;
+  max-width: 220px;
+  padding: 28px 24px;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+.statItem:last-child { border-right: none; }
+
+.statNum {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 36px;
+  font-weight: 900;
+  color: var(--green);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.statLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ── Games section ──────────────────────────────────────────────── */
+.section {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 80px 24px;
+}
+
+.sectionLabel {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--blue);
+  margin-bottom: 12px;
+  text-align: center;
+}
+
+.sectionTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(24px, 4vw, 40px);
+  font-weight: 900;
+  text-align: center;
+  margin-bottom: 56px;
+  line-height: 1.2;
+}
+
+/* ── Game cards ─────────────────────────────────────────────────── */
+.games {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 440px), 1fr));
+  gap: 24px;
+}
+
+.gameCard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow: hidden;
+  transition: transform 0.2s, box-shadow 0.2s;
+  backdrop-filter: blur(12px);
+  position: relative;
+}
+
+.gameCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.12);
+}
+
+.gameCard::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  padding: 1px;
+  background: linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.07));
+  pointer-events: none;
+}
+
+.gamePreview {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 80px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Monster Hunt preview */
+.gameCard.monster .gamePreview {
+  background: linear-gradient(135deg, #0b1220, #0f2040);
+}
+
+/* Double-Path preview */
+.gameCard.robot .gamePreview {
+  background: linear-gradient(135deg, #05080f, #0a1628);
+}
+
+/* Mini grid inside previews */
+.gamePreview::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(56,189,248,0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(56,189,248,0.08) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.previewEmoji {
+  position: relative;
+  z-index: 1;
+  filter: drop-shadow(0 0 20px rgba(255,255,255,0.3));
+  animation: float 3s ease-in-out infinite;
+}
+
+.gameCard.robot .previewEmoji { animation-delay: -1.5s; }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+/* Accent bar at top of card */
+.accentBar {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+}
+.gameCard.monster .accentBar {
+  background: linear-gradient(90deg, #22c55e, #38bdf8);
+}
+.gameCard.robot .accentBar {
+  background: linear-gradient(90deg, #f43f5e, #fbbf24);
+}
+
+.gameInfo {
+  padding: 24px 28px 28px;
+}
+
+.gameMeta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gameTag {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: 999px;
+}
+
+.gameCard.monster .gameTag {
+  background: rgba(34,197,94,0.15);
+  color: var(--green);
+  border: 1px solid rgba(34,197,94,0.30);
+}
+
+.gameCard.robot .gameTag {
+  background: rgba(251,191,36,0.12);
+  color: var(--yellow);
+  border: 1px solid rgba(251,191,36,0.28);
+}
+
+.betaTag {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: rgba(244,63,94,0.12);
+  color: var(--coral);
+  border: 1px solid rgba(244,63,94,0.25);
+}
+
+.gameTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 10px;
+  line-height: 1.2;
+}
+
+.gameDesc {
+  font-size: 14px;
+  line-height: 1.65;
+  color: var(--muted);
+  margin-bottom: 20px;
+}
+
+.mathConcept {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.mathConcept span {
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.10);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.5px;
+}
+
+.cardBtn {
+  display: block;
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  text-align: center;
+  font-family: 'Nunito', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  text-decoration: none;
+  transition: transform 0.15s, filter 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  border: none;
+}
+
+.cardBtn:hover { transform: translateY(-2px); filter: brightness(1.10); }
+.cardBtn:active { transform: translateY(0); }
+
+.gameCard.monster .cardBtn {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow: 0 4px 20px rgba(34,197,94,0.35);
+}
+
+.gameCard.robot .cardBtn {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  box-shadow: 0 4px 20px rgba(245,158,11,0.35);
+}
+
+/* ── Coming soon cards ──────────────────────────────────────────── */
+.comingCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+  margin-top: 40px;
+}
+
+.comingCard {
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.12);
+  border-radius: 16px;
+  padding: 22px 18px;
+  text-align: center;
+}
+
+.comingEmoji { font-size: 32px; margin-bottom: 10px; }
+
+.comingTitle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--muted);
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.comingConcept {
+  font-size: 11px;
+  color: rgba(120,140,180,0.70);
+}
+
+/* ── Philosophy section ─────────────────────────────────────────── */
+.philosophy {
+  background: rgba(255,255,255,0.02);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 80px 24px;
+}
+
+.philosophyInner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.quoteBlock {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(18px, 3.5vw, 28px);
+  font-weight: 800;
+  line-height: 1.4;
+  margin-bottom: 32px;
+  color: var(--text);
+}
+
+.quoteBlock em {
+  color: var(--green);
+  font-style: normal;
+  text-shadow: 0 0 30px rgba(34,197,94,0.4);
+}
+
+.philosophyText {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--muted);
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* ── Feedback section ───────────────────────────────────────────── */
+.feedbackSection {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 80px 24px;
+  text-align: center;
+}
+
+.feedbackCard {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  padding: 40px 36px;
+  backdrop-filter: blur(12px);
+}
+
+.feedbackCard h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.feedbackCard p {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 24px;
+}
+
+.feedbackCard .btn {
+  width: 100%;
+  padding: 15px;
+  font-size: 16px;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────── */
+footer {
+  border-top: 1px solid var(--border);
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+footer .footerLogo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--green);
+  margin-bottom: 8px;
+}
+
+footer .studio {
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(34,197,94,0.45);
+  margin-top: 8px;
+}
+
+/* ── Animations ─────────────────────────────────────────────────── */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .statsStrip { flex-wrap: wrap; }
+  .statItem { min-width: 50%; border-right: none; border-bottom: 1px solid var(--border); }
+  .gameInfo { padding: 18px 20px 22px; }
+  .feedbackCard { padding: 28px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Animated grid background -->
+<div class="gridBg">
+  <canvas id="bgCanvas"></canvas>
+</div>
+
+<div class="content">
+
+  <!-- ── Hero ── -->
+  <section class="hero">
+    <div class="badge">🎮 Now in Beta</div>
+
+    <h1>
+      Math<br>
+      <span class="arc">Arc</span><span class="adium">adium</span>
+    </h1>
+
+    <p class="tagline">Where Math <em>IS</em> the Game</p>
+
+    <div class="heroButtons">
+      <a href="#games" class="btn btn-primary">Play Now — It's Free</a>
+      <a href="#philosophy" class="btn btn-secondary">Our Philosophy</a>
+    </div>
+
+    <div class="scrollHint">
+      <div class="scrollArrow"></div>
+      Scroll to explore
+    </div>
+  </section>
+
+  <!-- ── Stats strip ── -->
+  <div class="statsStrip">
+    <div class="statItem">
+      <div class="statNum">2</div>
+      <div class="statLabel">Games Live</div>
+    </div>
+    <div class="statItem">
+      <div class="statNum">8</div>
+      <div class="statLabel">Games Planned</div>
+    </div>
+    <div class="statItem">
+      <div class="statNum">0</div>
+      <div class="statLabel">Ads. Ever.</div>
+    </div>
+    <div class="statItem">
+      <div class="statNum">∞</div>
+      <div class="statLabel">Math to Master</div>
+    </div>
+  </div>
+
+  <!-- ── Games ── -->
+  <section class="section" id="games">
+    <div class="sectionLabel">The Arcade</div>
+    <h2 class="sectionTitle">Pick Your Game</h2>
+
+    <div class="games">
+
+      <!-- Coordinate Monster Hunt -->
+      <div class="gameCard monster">
+        <div class="accentBar"></div>
+        <div class="gamePreview">
+          <div class="previewEmoji">👾</div>
+        </div>
+        <div class="gameInfo">
+          <div class="gameMeta">
+            <span class="gameTag">Live Now</span>
+          </div>
+          <h3 class="gameTitle">Coordinate Monster Hunt</h3>
+          <p class="gameDesc">Type coordinates to zap monsters on a live Cartesian grid. Three levels of intensity — plus a boss that moves along a linear equation. Survive all levels. Defeat the boss.</p>
+          <div class="mathConcept">
+            📐 <span>Coordinate Plane</span> <span>Ordered Pairs</span> <span>Linear Functions</span>
+          </div>
+          <a href="coordinatemonsterhunt.html" class="cardBtn">Play Monster Hunt →</a>
+        </div>
+      </div>
+
+      <!-- Double-Path: Robots -->
+      <div class="gameCard robot">
+        <div class="accentBar"></div>
+        <div class="gamePreview">
+          <div class="previewEmoji">🤖</div>
+        </div>
+        <div class="gameInfo">
+          <div class="gameMeta">
+            <span class="gameTag">Live Now</span>
+            <span class="betaTag">Beta</span>
+          </div>
+          <h3 class="gameTitle">Double-Path: Robots</h3>
+          <p class="gameDesc">Aim a two-leg rocket at an enemy robot using Rise/Run slopes. Predict the trajectory, lock your slope, fire — and watch the math play out across a neon city skyline.</p>
+          <div class="mathConcept">
+            📐 <span>Slope</span> <span>Rise / Run</span> <span>Vectors</span>
+          </div>
+          <a href="Double-Path-Sigma.html" class="cardBtn">Play Double-Path →</a>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Coming soon -->
+    <div style="margin-top: 56px;">
+      <div class="sectionLabel" style="margin-bottom: 16px;">Coming to the Arcade</div>
+      <div class="comingCards">
+        <div class="comingCard">
+          <div class="comingEmoji">🐧</div>
+          <div class="comingTitle">Pythagorean Penguins</div>
+          <div class="comingConcept">Pythagorean Theorem</div>
+        </div>
+        <div class="comingCard">
+          <div class="comingEmoji">🗺️</div>
+          <div class="comingTitle">Coming Soon</div>
+          <div class="comingConcept">Geometry</div>
+        </div>
+        <div class="comingCard">
+          <div class="comingEmoji">⚡</div>
+          <div class="comingTitle">Coming Soon</div>
+          <div class="comingConcept">Algebra</div>
+        </div>
+        <div class="comingCard">
+          <div class="comingEmoji">🌊</div>
+          <div class="comingTitle">Coming Soon</div>
+          <div class="comingConcept">Trigonometry</div>
+        </div>
+        <div class="comingCard">
+          <div class="comingEmoji">🔭</div>
+          <div class="comingTitle">Coming Soon</div>
+          <div class="comingConcept">Statistics</div>
+        </div>
+        <div class="comingCard">
+          <div class="comingEmoji">🏗️</div>
+          <div class="comingTitle">Coming Soon</div>
+          <div class="comingConcept">Number Theory</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Philosophy ── -->
+  <div class="philosophy" id="philosophy">
+    <div class="philosophyInner">
+      <p class="quoteBlock">
+        Math games have great intentions.<br>
+        But too often, the math and the game<br>
+        live separate lives.<br>
+        At Math Arcadium,<br>
+        <em>the math IS the game.</em>
+      </p>
+      <p class="philosophyText">
+        I've taught middle and high school math and what I've found is a dearth of math games where math is intrinsically connected to gameplay. Most that exist on the web ask a math related question and the player is "rewarded" with unrelated gaming. My goal creating this website is to demonstrate pure mathematical concepts in action. Eventually, I hope to have lesson plans accompany each game. And lastly, <strong style="color:#22c55e; font-size:17px;">THIS WEBSITE WILL ALWAYS BE FREE!</strong>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Feedback ── -->
+  <div class="feedbackSection">
+    <div class="feedbackCard">
+      <h3>🎯 You're a Beta Tester</h3>
+      <p>Math Arcadium is brand new and we want your honest feedback. What's fun? What's confusing? What would make it better? Students, teachers, and parents — all voices welcome.</p>
+      <a href="https://docs.google.com/forms/d/e/1FAIpQLSexample/viewform"
+         class="btn btn-primary cardBtn" target="_blank" rel="noopener">
+        Share Your Feedback →
+      </a>
+    </div>
+  </div>
+
+  <!-- ── Footer ── -->
+  <footer>
+    <div class="footerLogo">Math Arcadium</div>
+    <div>Where Math IS the Game &nbsp;·&nbsp; Free Forever &nbsp;·&nbsp; No Ads</div>
+    <div class="studio">Wild Lange'n Productions™</div>
+  </footer>
+
+</div>
+
+<script>
+// ── Animated background grid ───────────────────────────────────────────────
+const bgCanvas = document.getElementById("bgCanvas");
+const bgCtx    = bgCanvas.getContext("2d");
+
+function resizeBg() {
+  bgCanvas.width  = window.innerWidth;
+  bgCanvas.height = window.innerHeight;
+}
+resizeBg();
+window.addEventListener("resize", resizeBg);
+
+// Pulsing dots at grid intersections
+const CELL = 64;
+let t = 0;
+
+function drawBg() {
+  const W = bgCanvas.width, H = bgCanvas.height;
+  bgCtx.clearRect(0, 0, W, H);
+
+  t += 0.008;
+
+  const cols = Math.ceil(W / CELL) + 1;
+  const rows = Math.ceil(H / CELL) + 1;
+
+  // Grid lines
+  bgCtx.lineWidth   = 1;
+
+  for (let c = 0; c < cols; c++) {
+    const x     = c * CELL;
+    const pulse = 0.5 + 0.5 * Math.sin(t + c * 0.4);
+    bgCtx.strokeStyle = `rgba(56,189,248,${0.025 + pulse * 0.025})`;
+    bgCtx.beginPath();
+    bgCtx.moveTo(x, 0);
+    bgCtx.lineTo(x, H);
+    bgCtx.stroke();
+  }
+
+  for (let r = 0; r < rows; r++) {
+    const y     = r * CELL;
+    const pulse = 0.5 + 0.5 * Math.sin(t + r * 0.4);
+    bgCtx.strokeStyle = `rgba(56,189,248,${0.025 + pulse * 0.025})`;
+    bgCtx.beginPath();
+    bgCtx.moveTo(0, y);
+    bgCtx.lineTo(W, y);
+    bgCtx.stroke();
+  }
+
+  // Glowing intersection dots
+  for (let c = 0; c < cols; c++) {
+    for (let r = 0; r < rows; r++) {
+      const x     = c * CELL;
+      const y     = r * CELL;
+      const pulse = 0.5 + 0.5 * Math.sin(t * 1.2 + c * 0.5 + r * 0.7);
+      const alpha = 0.04 + pulse * 0.10;
+      bgCtx.fillStyle = `rgba(34,197,94,${alpha})`;
+      bgCtx.beginPath();
+      bgCtx.arc(x, y, 2, 0, Math.PI * 2);
+      bgCtx.fill();
+    }
+  }
+
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+// ── Smooth scroll for anchor links ─────────────────────────────────────────
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener("click", e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute("href"))?.scrollIntoView({ behavior: "smooth" });
+  });
+});
+</script>
+</body>
+</html>
